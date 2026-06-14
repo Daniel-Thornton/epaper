@@ -109,7 +109,7 @@ class WebApp(BaseScreen):
     # ── Input ─────────────────────────────────────────────────────────────────
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == BACK:
             self.app.pop_screen()
             return True
@@ -121,7 +121,7 @@ class WebApp(BaseScreen):
             self._menu_sel = (self._menu_sel + 1) % len(self._menu)
             self.request_partial()
             return True
-        if action == SELECT:
+        if action == ACCEPT:
             choice = self._menu[self._menu_sel]
             if choice == 'Back':
                 self.app.pop_screen()

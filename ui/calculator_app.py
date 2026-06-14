@@ -35,7 +35,7 @@ class CalculatorApp(BaseScreen):
         self._error = False
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == UP:
             self._cursor_row = (self._cursor_row - 1) % ROWS
             self.request_partial()
@@ -44,22 +44,25 @@ class CalculatorApp(BaseScreen):
             self._cursor_row = (self._cursor_row + 1) % ROWS
             self.request_partial()
             return True
+        if action == LEFT:
+            self._cursor_col = (self._cursor_col - 1) % COLS
+            self.request_partial()
+            return True
+        if action == RIGHT:
+            self._cursor_col = (self._cursor_col + 1) % COLS
+            self.request_partial()
+            return True
         if action == BACK:
-            # Left in grid; if at leftmost column, delete last char or exit
-            if self._cursor_col > 0:
-                self._cursor_col -= 1
-                self.request_partial()
-            elif self._expr or self._result:
+            # Dedicated backspace / exit
+            if self._expr or self._result:
                 self._press('del')
                 self.request_partial()
             else:
                 self.app.pop_screen()
             return True
-        if action == SELECT:
-            # Activate highlighted key then advance column
+        if action == ACCEPT:
             _, op = _LAYOUT[self._cursor_row][self._cursor_col]
             self._press(op)
-            self._cursor_col = (self._cursor_col + 1) % COLS
             self.request_partial()
             return True
         return False
@@ -139,7 +142,7 @@ class CalculatorApp(BaseScreen):
                                   label, f.xlarge, selected=sel, pressed=pressed)
 
         draw.text((8, H - TK - 24),
-                  'UP/DOWN: row  BACK: col-left/del  SELECT: press+right',
+                  'Arrows: move  ACCEPT: press key  BACK: delete/exit',
                   font=f.small, fill=0)
 
         win95.draw_taskbar(draw, f.small, time.strftime('%H:%M'), 'Calculator')

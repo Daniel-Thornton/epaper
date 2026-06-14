@@ -83,7 +83,7 @@ class NotesApp(BaseScreen):
         return False
 
     def _input_list(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == BACK:
             self.app.pop_screen()
             return True
@@ -100,7 +100,7 @@ class NotesApp(BaseScreen):
                 self._scroll = self._sel - VISIBLE + 1
             self.request_partial()
             return True
-        if action == SELECT:
+        if action == ACCEPT:
             if self._sel == len(self._notes):
                 self._open_keyboard('', is_new=True)
             else:
@@ -111,7 +111,7 @@ class NotesApp(BaseScreen):
         return False
 
     def _input_view(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == BACK:
             self._mode = 'list'
             self.request_full()
@@ -124,7 +124,7 @@ class NotesApp(BaseScreen):
             self._view_scroll += 1
             self.request_partial()
             return True
-        if action == SELECT:
+        if action == ACCEPT:
             self._action_sel = 0
             self._mode = 'action_menu'
             self.request_partial()
@@ -132,7 +132,7 @@ class NotesApp(BaseScreen):
         return False
 
     def _input_action(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == BACK:
             self._mode = 'view'
             self.request_partial()
@@ -145,7 +145,7 @@ class NotesApp(BaseScreen):
             self._action_sel = (self._action_sel + 1) % len(_ACTION_OPTS)
             self.request_partial()
             return True
-        if action == SELECT:
+        if action == ACCEPT:
             choice = _ACTION_OPTS[self._action_sel]
             if choice == 'Edit Title' and self._sel < len(self._notes):
                 self._open_keyboard(self._notes[self._sel].get('title', ''))
@@ -159,12 +159,12 @@ class NotesApp(BaseScreen):
         return False
 
     def _input_delete(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action in (BACK, DOWN):
             self._mode = 'view'
             self.request_partial()
             return True
-        if action in (SELECT, UP):
+        if action in (ACCEPT, UP):
             if self._sel < len(self._notes):
                 _delete_note(self._notes[self._sel])
             self._reload()

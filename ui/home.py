@@ -43,29 +43,35 @@ class HomeScreen(BaseScreen):
                 self.request_partial()
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         n = len(_APPS)
         if action == UP:
-            self._sel = (self._sel - 1) % n
-            self.request_partial()
+            if self._sel >= 3:
+                self._sel -= 3
+                self.request_partial()
             return True
         if action == DOWN:
-            self._sel = (self._sel + 1) % n
-            self.request_partial()
+            if self._sel + 3 < n:
+                self._sel += 3
+                self.request_partial()
             return True
-        if action == BACK:
-            # Column-left movement within the grid row
+        if action == LEFT:
             row, col = divmod(self._sel, 3)
             if col > 0:
                 self._sel -= 1
-            else:
-                # Already at col 0 — wrap to last item in previous row
-                self._sel = (self._sel - 1) % n
-            self.request_partial()
+                self.request_partial()
             return True
-        if action == SELECT:
+        if action == RIGHT:
+            row, col = divmod(self._sel, 3)
+            if col < 2 and self._sel + 1 < n:
+                self._sel += 1
+                self.request_partial()
+            return True
+        if action == ACCEPT:
             self._launch()
             return True
+        if action == BACK:
+            return True  # home is root — consume silently
         return False
 
     def _launch(self):

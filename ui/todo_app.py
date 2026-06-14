@@ -111,7 +111,7 @@ class TodoApp(BaseScreen):
     # ── Input ─────────────────────────────────────────────────────────────────
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == BACK:
             self.app.pop_screen()
             return True
@@ -128,7 +128,7 @@ class TodoApp(BaseScreen):
                 self._scroll = self._sel - VISIBLE + 1
             self.request_partial()
             return True
-        if action == SELECT:
+        if action == ACCEPT:
             if self._sel == len(self._todos):
                 self._add_todo()
             else:

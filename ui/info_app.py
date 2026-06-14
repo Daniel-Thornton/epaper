@@ -102,12 +102,12 @@ class InfoApp(BaseScreen):
             self.request_partial()
 
     def handle_input(self, action):
-        from input_handler import BACK, SELECT
-        if action in (BACK, SELECT):
-            if action == SELECT:
-                self._refresh_info()
-                self.request_full()
-                return True
+        from input_handler import BACK, ACCEPT
+        if action == ACCEPT:
+            self._refresh_info()
+            self.request_full()
+            return True
+        if action == BACK:
             self.app.pop_screen()
             return True
         return False

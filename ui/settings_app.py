@@ -20,6 +20,11 @@ DEFAULTS = {
     'partial_refresh_limit': 20,
     'auto_sleep_mins': 0,
     'gcal_enabled': False,
+    'tunnel_url': '',
+    'chat_url': '',
+    'calorie_url': '',
+    'ollama_model': 'llama3.2',
+    'target_kcal': 2000,
 }
 
 
@@ -37,8 +42,8 @@ def _save(cfg):
     json.dump(cfg, open(DATA, 'w'), indent=2)
 
 
-ITEM_H = 64
-VISIBLE = 9
+ITEM_H = 58
+VISIBLE = 10
 
 # (label, key, type, options/min/max)
 _SETTINGS = [
@@ -46,6 +51,11 @@ _SETTINGS = [
     ('Full Refresh Interval','full_refresh_interval', 'int',    (60, 3600, 60)),
     ('Partial Refresh Limit','partial_refresh_limit', 'int',    (5, 50, 5)),
     ('Auto Sleep (mins)',    'auto_sleep_mins',       'int',    (0, 60, 5)),
+    ('Tunnel URL',           'tunnel_url',            'text',   None),
+    ('Chat URL (optional)',  'chat_url',              'text',   None),
+    ('Calorie URL (opt.)',   'calorie_url',           'text',   None),
+    ('Ollama Model',         'ollama_model',          'text',   None),
+    ('Daily Target (kcal)',  'target_kcal',           'int',    (500, 5000, 50)),
     ('Google Cal Enabled',   'gcal_enabled',          'bool',   None),
     ('Google Cal Setup',     '_gcal_setup',           'action', None),
     ('About',                '_about',                'action', None),
@@ -68,9 +78,9 @@ class SettingsApp(BaseScreen):
     # ── Input ─────────────────────────────────────────────────────────────────
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if self._sub_mode:
-            if action in (BACK, SELECT):
+            if action == BACK:
                 self._sub_mode = None
                 self.request_full()
             return True
@@ -85,26 +95,30 @@ class SettingsApp(BaseScreen):
             return True
 
         if action == UP:
-            if self._editing:
-                self._adjust(-1)
-            else:
-                self._sel = max(0, self._sel - 1)
-                if self._sel < self._scroll:
-                    self._scroll = self._sel
-                self.request_partial()
+            self._sel = max(0, self._sel - 1)
+            if self._sel < self._scroll:
+                self._scroll = self._sel
+            self._editing = False
+            self.request_partial()
             return True
 
         if action == DOWN:
-            if self._editing:
-                self._adjust(+1)
-            else:
-                self._sel = min(len(_SETTINGS) - 1, self._sel + 1)
-                if self._sel >= self._scroll + VISIBLE:
-                    self._scroll = self._sel - VISIBLE + 1
-                self.request_partial()
+            self._sel = min(len(_SETTINGS) - 1, self._sel + 1)
+            if self._sel >= self._scroll + VISIBLE:
+                self._scroll = self._sel - VISIBLE + 1
+            self._editing = False
+            self.request_partial()
             return True
 
-        if action == SELECT:
+        if action == LEFT:
+            self._adjust(-1)
+            return True
+
+        if action == RIGHT:
+            self._adjust(+1)
+            return True
+
+        if action == ACCEPT:
             return self._activate()
 
         return False
@@ -123,6 +137,15 @@ class SettingsApp(BaseScreen):
             self._cfg[key] = not self._cfg[key]
             _save(self._cfg)
             self.request_partial()
+            return True
+        if typ == 'text':
+            from ui.keyboard import VirtualKeyboard
+            current = str(self._cfg.get(key, ''))
+            def on_done(text, _key=key):
+                self._cfg[_key] = text
+                _save(self._cfg)
+                self.request_partial()
+            self.app.push_screen(VirtualKeyboard(self.app, f'Set: {label}', current, on_done=on_done))
             return True
         if typ in ('int', 'choice'):
             self._editing = not self._editing
@@ -184,6 +207,9 @@ class SettingsApp(BaseScreen):
                 val_str = '→'
             elif typ == 'bool':
                 val_str = 'Yes' if self._cfg.get(key) else 'No'
+            elif typ == 'text':
+                raw = str(self._cfg.get(key, ''))
+                val_str = (raw[:18] + '…') if len(raw) > 18 else (raw or '(not set)')
             else:
                 val_str = str(self._cfg.get(key, ''))
 
@@ -197,11 +223,11 @@ class SettingsApp(BaseScreen):
 
         if not self._editing:
             draw.text((8, H - TK - 26),
-                      'UP/DOWN: navigate  SELECT: edit  BACK: save & exit',
+                      'UP/DOWN: select  ACCEPT: edit  BACK: exit',
                       font=f.small, fill=0)
         else:
             draw.text((8, H - TK - 26),
-                      'UP/DOWN: change value  SELECT/BACK: confirm',
+                      'LEFT/RIGHT: change value  ACCEPT/BACK: confirm',
                       font=f.small, fill=0)
 
     def _render_about(self, draw, f):
@@ -221,7 +247,7 @@ class SettingsApp(BaseScreen):
             'requires credentials.json',
             'in the data/ directory.',
             '',
-            'Press SELECT or BACK to close',
+            'Press BACK to close',
         ]
         for i, line in enumerate(lines):
             draw.text((20, TB + 16 + i * 28), line, font=f.body, fill=0)
@@ -245,7 +271,7 @@ class SettingsApp(BaseScreen):
             'pip install google-api-python',
             '-client google-auth-oauthlib',
             '',
-            'Press SELECT or BACK to close',
+            'Press BACK to close',
         ]
         for i, line in enumerate(lines):
             draw.text((14, TB + 10 + i * 26), line, font=f.small, fill=0)

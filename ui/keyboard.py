@@ -42,7 +42,7 @@ class VirtualKeyboard(BaseScreen):
         self._col = 0
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == UP:
             self._row = (self._row - 1) % len(_ROWS)
             self._col = min(self._col, len(_ROWS[self._row]) - 1)
@@ -53,11 +53,20 @@ class VirtualKeyboard(BaseScreen):
             self._col = min(self._col, len(_ROWS[self._row]) - 1)
             self.request_partial()
             return True
-        if action == BACK:
+        if action == LEFT:
             self._col = (self._col - 1) % len(_ROWS[self._row])
             self.request_partial()
             return True
-        if action == SELECT:
+        if action == RIGHT:
+            self._col = (self._col + 1) % len(_ROWS[self._row])
+            self.request_partial()
+            return True
+        if action == BACK:
+            # Backspace — delete last character
+            self._text = self._text[:-1]
+            self.request_partial()
+            return True
+        if action == ACCEPT:
             key = _ROWS[self._row][self._col]
             if key == 'DEL':
                 self._text = self._text[:-1]

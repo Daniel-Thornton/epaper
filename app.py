@@ -11,7 +11,7 @@ import signal
 
 import fonts
 from display import DisplayManager
-from input_handler import InputHandler, UP, DOWN, BACK, SELECT
+from input_handler import InputHandler, UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,8 @@ class App:
         from ui.calculator_app import CalculatorApp
         from ui.settings_app   import SettingsApp
         from ui.info_app       import InfoApp
-        from ui.webapp         import WebApp
+        from ui.calorie_app    import CalorieApp
+        from ui.chat_app       import ChatApp
 
         mapping = {
             'clock':      lambda: ClockApp(self),
@@ -85,10 +86,8 @@ class App:
             'calculator': lambda: CalculatorApp(self),
             'settings':   lambda: SettingsApp(self),
             'info':       lambda: InfoApp(self),
-            'calorie':    lambda: WebApp(self, 'Calorie Logger',
-                                         'https://daniel-thornton.github.io/calorie-logger/'),
-            'chat':       lambda: WebApp(self, 'Chat',
-                                         'https://daniel-thornton.github.io/chat/'),
+            'calorie':    lambda: CalorieApp(self),
+            'chat':       lambda: ChatApp(self),
         }
         builder = mapping.get(key)
         if builder:
@@ -124,7 +123,6 @@ class App:
         if action:
             screen = self.current
             if screen and not screen.handle_input(action):
-                # Default BACK handling
                 if action == BACK and len(self._stack) > 1:
                     self.pop_screen()
 

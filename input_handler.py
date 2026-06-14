@@ -1,59 +1,75 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 """
-Button abstraction.  Supports Waveshare HAT GPIO buttons (4-button layout)
-AND keyboard input simultaneously (useful when SSH'd into the Pi for testing).
+6-button input abstraction.
 
-GPIO pins (BCM numbering):
-  KEY1 = 21  → UP
-  KEY2 = 20  → DOWN
-  KEY3 = 16  → BACK
-  KEY4 = 26  → SELECT
+GPIO pins (BCM, adjust to match your HAT wiring):
+  UP     = 6
+  DOWN   = 19
+  LEFT   = 5
+  RIGHT  = 26
+  BACK   = 21
+  ACCEPT = 13
 
-Keyboard bindings (always active when stdin is a TTY):
-  w / k / arrow-up    → UP
-  s / j / arrow-down  → DOWN
-  a / h / arrow-left  → BACK
-  d / l / arrow-right → SELECT
-  q                   → QUIT
+Keyboard equivalents (always active when stdin is a TTY):
+  Arrow keys          → UP / DOWN / LEFT / RIGHT
+  w/a/s/d             → UP / LEFT / DOWN / RIGHT
+  Enter / Space       → ACCEPT
+  Escape / Backspace  → BACK
+  q / Ctrl-C          → QUIT
 """
 import sys
 import queue
 import threading
 import logging
+import select as _select
 
 logger = logging.getLogger(__name__)
 
 UP     = 'UP'
 DOWN   = 'DOWN'
+LEFT   = 'LEFT'
+RIGHT  = 'RIGHT'
 BACK   = 'BACK'
-SELECT = 'SELECT'
+ACCEPT = 'ACCEPT'
 
+# ── GPIO pin → action mapping ─────────────────────────────────────────────────
+# Adjust these to match your HAT's wiring
 _GPIO_MAP = {
-    21: UP,
-    20: DOWN,
-    16: BACK,
-    26: SELECT,
+    6:  UP,
+    19: DOWN,
+    5:  LEFT,
+    26: RIGHT,
+    21: BACK,
+    13: ACCEPT,
 }
 
+# ── Keyboard → action mapping ─────────────────────────────────────────────────
 _KEY_MAP = {
-    'w': UP,    'k': UP,
-    's': DOWN,  'j': DOWN,
-    'a': BACK,  'h': BACK,
-    'd': SELECT,'l': SELECT,
-    '\x1b[A': UP,     # arrow up
-    '\x1b[B': DOWN,   # arrow down
-    '\x1b[D': BACK,   # arrow left
-    '\x1b[C': SELECT, # arrow right
-    '\n': SELECT,     # Enter
-    '\r': SELECT,
+    # WASD
+    'w': UP,
+    's': DOWN,
+    'a': LEFT,
+    'd': RIGHT,
+    # Arrow keys (ANSI escape sequences)
+    '\x1b[A': UP,
+    '\x1b[B': DOWN,
+    '\x1b[D': LEFT,
+    '\x1b[C': RIGHT,
+    # Accept
+    '\n':  ACCEPT,
+    '\r':  ACCEPT,
+    ' ':   ACCEPT,
+    # Back
+    '\x1b': BACK,       # Escape
+    '\x7f': BACK,       # Backspace (DEL)
+    '\x08': BACK,       # Backspace (BS)
 }
 
 
 class InputHandler:
     def __init__(self):
         self._q = queue.Queue()
-        self._gpio_ok = False
         self._setup_gpio()
         self._setup_keyboard()
 
@@ -67,8 +83,7 @@ class InputHandler:
                 btn = Button(pin, pull_up=True, bounce_time=0.05)
                 btn.when_pressed = lambda a=action: self._q.put(a)
                 self._buttons[pin] = btn
-            self._gpio_ok = True
-            logger.info("GPIO buttons ready (pins %s)", list(_GPIO_MAP.keys()))
+            logger.info("GPIO buttons ready — pins %s", list(_GPIO_MAP.keys()))
         except Exception as e:
             self._buttons = {}
             logger.info("GPIO not available (%s)", e)
@@ -76,20 +91,18 @@ class InputHandler:
     # ── Keyboard ──────────────────────────────────────────────────────────────
 
     def _setup_keyboard(self):
-        """Always start keyboard listener when stdin is a real terminal."""
         if not sys.stdin.isatty():
             logger.info("stdin is not a TTY — keyboard input disabled")
             return
         t = threading.Thread(target=self._keyboard_thread, daemon=True)
         t.start()
-        logger.info("Keyboard input ready (wasd / hjkl / arrows / Enter)")
+        logger.info("Keyboard ready  (wasd / arrows / Enter=ACCEPT / Esc=BACK / q=quit)")
 
     def _keyboard_thread(self):
         try:
-            import tty
-            import termios
+            import tty, termios
         except ImportError:
-            logger.warning("tty/termios not available — keyboard input disabled")
+            logger.warning("tty/termios unavailable — keyboard input disabled")
             return
 
         fd = sys.stdin.fileno()
@@ -100,24 +113,22 @@ class InputHandler:
                 ch = sys.stdin.read(1)
                 if not ch:
                     break
+
                 if ch == '\x1b':
-                    # Escape sequence — read up to 2 more bytes with a short window
-                    try:
-                        tty.setcbreak(fd)
-                        rest = ''
-                        for _ in range(2):
-                            import select as sel
-                            r, _, _ = sel.select([sys.stdin], [], [], 0.05)
-                            if r:
-                                rest += sys.stdin.read(1)
-                        tty.setraw(fd)
-                        ch = ch + rest
-                    except Exception:
-                        pass
+                    # Peek for up to 2 more bytes within 50 ms (arrow keys)
+                    rest = ''
+                    for _ in range(2):
+                        r, _, _ = _select.select([sys.stdin], [], [], 0.05)
+                        if r:
+                            rest += sys.stdin.read(1)
+                        else:
+                            break
+                    ch = ch + rest
+
                 action = _KEY_MAP.get(ch)
                 if action:
                     self._q.put(action)
-                elif ch in ('q', 'Q', '\x03'):   # q or Ctrl-C
+                elif ch in ('q', 'Q', '\x03'):
                     self._q.put('QUIT')
                     break
         except Exception as e:
@@ -131,7 +142,6 @@ class InputHandler:
     # ── Public API ────────────────────────────────────────────────────────────
 
     def get_event(self, timeout=0.05):
-        """Non-blocking poll; returns action string or None."""
         try:
             return self._q.get(timeout=timeout)
         except queue.Empty:

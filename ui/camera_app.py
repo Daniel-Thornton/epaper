@@ -100,18 +100,18 @@ class CameraApp(BaseScreen):
     # ── Input ─────────────────────────────────────────────────────────────────
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if self._mode == 'gallery':
             if action == BACK:
                 self._mode = 'preview'
                 self.request_full()
                 return True
-            if action == UP:
+            if action in (UP, LEFT):
                 if self._gallery_files:
                     self._gallery_sel = (self._gallery_sel - 1) % len(self._gallery_files)
                     self.request_full()
                 return True
-            if action == DOWN:
+            if action in (DOWN, RIGHT):
                 if self._gallery_files:
                     self._gallery_sel = (self._gallery_sel + 1) % len(self._gallery_files)
                     self.request_full()
@@ -129,7 +129,7 @@ class CameraApp(BaseScreen):
         if action == BACK:
             self.app.pop_screen()
             return True
-        if action == SELECT:
+        if action == ACCEPT:
             return self._select()
         return False
 

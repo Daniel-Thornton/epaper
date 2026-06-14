@@ -79,7 +79,7 @@ class ClockApp(BaseScreen):
     # ── Input ─────────────────────────────────────────────────────────────────
 
     def handle_input(self, action):
-        from input_handler import UP, DOWN, BACK, SELECT
+        from input_handler import UP, DOWN, LEFT, RIGHT, BACK, ACCEPT
         if action == BACK:
             if self._tab == 2 and self._alarm_mode == 'edit':
                 self._alarm_mode = 'list'
@@ -88,75 +88,79 @@ class ClockApp(BaseScreen):
             self.app.pop_screen()
             return True
 
-        if action == SELECT:
-            if self._tab == 0:
-                # Cycle sub-tabs
-                self._tab = (self._tab + 1) % len(TABS)
-                self.request_full()
-                return True
-            if self._tab == 1:
-                return self._timer_select()
-            if self._tab == 2:
-                return self._alarm_select()
+        # LEFT / RIGHT switch tabs
+        if action == LEFT:
+            self._tab = (self._tab - 1) % len(TABS)
+            self.request_full()
+            return True
+        if action == RIGHT:
+            self._tab = (self._tab + 1) % len(TABS)
+            self.request_full()
+            return True
 
+        # UP / DOWN: adjust value or scroll
         if action == UP:
             if self._tab == 1:
                 return self._timer_adj(+1)
             if self._tab == 2:
                 return self._alarm_adj(-1)
-            self._tab = (self._tab - 1) % len(TABS)
-            self.request_full()
             return True
-
         if action == DOWN:
             if self._tab == 1:
                 return self._timer_adj(-1)
             if self._tab == 2:
                 return self._alarm_adj(+1)
-            self._tab = (self._tab + 1) % len(TABS)
-            self.request_full()
+            return True
+
+        # ACCEPT: confirm / start / stop / next field
+        if action == ACCEPT:
+            if self._tab == 1:
+                return self._timer_accept()
+            if self._tab == 2:
+                return self._alarm_accept()
             return True
 
         return False
 
-    # Timer controls
-    def _timer_select(self):
-        from input_handler import SELECT
-        if not self._timer_running:
-            # move cursor between h/m/s fields (0,1,2) then Start
-            if self._timer_cursor < 3:
-                self._timer_cursor = (self._timer_cursor + 1) % 4
-            if self._timer_cursor == 3:   # Start button
+    # ── Timer ─────────────────────────────────────────────────────────────────
+
+    def _timer_accept(self):
+        if self._timer_running:
+            self._timer_running = False
+            self._timer_end = 0
+        else:
+            if self._timer_cursor < 2:
+                self._timer_cursor += 1   # advance H→M→S
+            else:
+                # Start the timer
                 secs = (self._timer_hms[0] * 3600 +
                         self._timer_hms[1] * 60 +
                         self._timer_hms[2])
                 if secs > 0:
                     self._timer_end = time.time() + secs
                     self._timer_running = True
-        else:
-            self._timer_running = False
-            self._timer_end = 0
+                    self._timer_cursor = 0
         self.request_partial()
         return True
 
     def _timer_adj(self, delta):
         if self._timer_running:
             return False
-        i = min(self._timer_cursor, 2)
+        i = self._timer_cursor   # 0=H, 1=M, 2=S
         limits = [23, 59, 59]
         self._timer_hms[i] = max(0, min(limits[i], self._timer_hms[i] + delta))
         self.request_partial()
         return True
 
-    # Alarm controls
-    def _alarm_select(self):
+    # ── Alarm ─────────────────────────────────────────────────────────────────
+
+    def _alarm_accept(self):
         if self._alarm_mode == 'list':
             if self._alarm_sel < len(self._alarms):
                 self._edit_alarm = dict(self._alarms[self._alarm_sel])
                 self._alarm_mode = 'edit'
                 self._edit_field = 0
             else:
-                # New alarm
                 self._alarms.append({'hour': 7, 'minute': 0, 'label': 'Alarm', 'enabled': True})
                 save_alarms(self._alarms)
                 self._alarm_sel = len(self._alarms) - 1
@@ -164,12 +168,13 @@ class ClockApp(BaseScreen):
                 self._alarm_mode = 'edit'
                 self._edit_field = 0
         else:
-            self._edit_field = (self._edit_field + 1) % 3
-            if self._edit_field == 0:
-                # Saved
+            # Advance through fields; on last field save
+            self._edit_field += 1
+            if self._edit_field >= 3:
                 self._alarms[self._alarm_sel] = self._edit_alarm
                 save_alarms(self._alarms)
                 self._alarm_mode = 'list'
+                self._edit_field = 0
         self.request_partial()
         return True
 
@@ -291,7 +296,7 @@ class ClockApp(BaseScreen):
         else:
             win95.draw_button(draw, 100, y0 + 100, 380, y0 + 150, 'STOP', f.large, selected=True)
 
-        draw.text((8, y0 + 230), 'UP/DOWN: adjust  SELECT: next/start', font=f.small, fill=0)
+        draw.text((8, y0 + 230), 'UP/DOWN: adjust field  ACCEPT: next field / start', font=f.small, fill=0)
 
     def _render_alarm(self, draw, f, y0):
         if self._alarm_mode == 'list':
