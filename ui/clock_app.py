@@ -198,9 +198,7 @@ class ClockApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        # Title bar
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'Clock', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'Clock', f.title, 'clock', img)
 
         # Tab bar
         tab_y0 = TB
@@ -300,7 +298,7 @@ class ClockApp(BaseScreen):
 
     def _render_alarm(self, draw, f, y0):
         if self._alarm_mode == 'list':
-            draw.text((10, y0 + 6), 'Alarms  (SELECT=edit  UP/DOWN=scroll)', font=f.small, fill=0)
+            draw.text((10, y0 + 6), 'Alarms  (ACCEPT=edit  UP/DOWN=scroll)', font=f.small, fill=0)
             for i, alarm in enumerate(self._alarms):
                 by = y0 + 30 + i * 52
                 sel = (i == self._alarm_sel)
@@ -313,7 +311,7 @@ class ClockApp(BaseScreen):
             win95.draw_button(draw, 10, ny, W - 10, ny + 44, '+ New Alarm', f.medium, selected=sel)
         else:
             ea = self._edit_alarm
-            draw.text((10, y0 + 6), 'Edit Alarm  (UP/DOWN: change  SELECT: next/save)', font=f.small, fill=0)
+            draw.text((10, y0 + 6), 'Edit Alarm  (UP/DOWN: change  ACCEPT: next/save)', font=f.small, fill=0)
             for fi, (label, val) in enumerate([
                 ('Hour',    f"{ea['hour']:02d}"),
                 ('Minute',  f"{ea['minute']:02d}"),
@@ -327,4 +325,4 @@ class ClockApp(BaseScreen):
                                     f.bold_lg if sel else f.large, fill=0)
                 if sel:
                     draw.rectangle([20, by, W - 20, by + 60], outline=0, width=3)
-            draw.text((10, y0 + 250), 'SELECT on Enabled = save', font=f.small, fill=0)
+            draw.text((10, y0 + 250), 'ACCEPT on Enabled = save', font=f.small, fill=0)

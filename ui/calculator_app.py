@@ -109,8 +109,7 @@ class CalculatorApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'Calculator', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'Calculator', f.title, 'calculator', img)
 
         # Display panel
         disp_y = TB + 4

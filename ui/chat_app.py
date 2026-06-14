@@ -253,8 +253,7 @@ class ChatApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f    = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'DanGPT', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'DanGPT', f.title, 'chat', img)
         if self._busy:
             draw.text((W - 90, 6), '● thinking', font=f.small, fill=255)
 

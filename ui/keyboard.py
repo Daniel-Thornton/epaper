@@ -87,8 +87,7 @@ class VirtualKeyboard(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), self._prompt, font=f.title, fill=255)
+        win95.draw_title_bar(draw, self._prompt, f.title, 'keyboard', img)
 
         # Text field
         win95.draw_sunken_box(draw, 10, TB + 8, W - 10, TB + 98, fill=255)

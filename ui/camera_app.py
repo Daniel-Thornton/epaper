@@ -215,8 +215,7 @@ class CameraApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'Camera', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'Camera', f.title, 'camera', img)
 
         if self._mode == 'gallery':
             self._render_gallery(img, draw, f)

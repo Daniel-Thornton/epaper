@@ -173,8 +173,7 @@ class SettingsApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'Settings', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'Settings', f.title, 'settings', img)
 
         if self._sub_mode == 'about':
             self._render_about(draw, f)

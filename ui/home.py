@@ -95,13 +95,16 @@ class HomeScreen(BaseScreen):
         win95.text_centered(draw, cx_w, 103, date_str, f.body, fill=0)
 
         # ── App icons ─────────────────────────────────────────────────────────
+        import icons as _icons
         for idx, (key, label, icon_key) in enumerate(_APPS):
             row, col = divmod(idx, 3)
             cx = _COLS[col]
             cy = _ROWS[row]
-            painter = win95.ICON_PAINTERS.get(icon_key)
+            png = _icons.get(icon_key, size=win95.ICON_SIZE)
+            painter = win95.ICON_PAINTERS.get(icon_key) if png is None else None
             win95.draw_icon(draw, cx, cy, label, f.small,
-                            icon_draw_fn=painter, selected=(idx == self._sel))
+                            icon_draw_fn=painter, selected=(idx == self._sel),
+                            icon_img=png, base_img=img)
 
         # ── Taskbar ───────────────────────────────────────────────────────────
         clock_str = time.strftime('%H:%M', now)

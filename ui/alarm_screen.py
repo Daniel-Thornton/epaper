@@ -24,16 +24,18 @@ class AlarmScreen(BaseScreen):
             self.request_partial()
 
     def handle_input(self, action):
-        from input_handler import SELECT, BACK
-        if action in (SELECT, BACK):
+        from input_handler import ACCEPT, BACK
+        if action in (ACCEPT, BACK):
             self.app.pop_screen()
             return True
         return False
 
     def render(self):
-        img = self.new_image()
+        from PIL import ImageOps
+        import icons as _icons
+        img  = self.new_image()
         draw = ImageDraw.Draw(img)
-        f = self.app.fonts
+        f    = self.app.fonts
 
         # Flashing full-screen border
         if self._blink:
@@ -41,10 +43,16 @@ class AlarmScreen(BaseScreen):
         else:
             draw.rectangle([0, 0, W - 1, H - 1], fill=0)
 
-        bg = 0 if not self._blink else 255
         fg = 255 if not self._blink else 0
 
-        win95.text_centered(draw, W // 2, 220, 'ALARM', f.huge, fill=fg)
+        # Alarm icon centred near top
+        icon = _icons.get('alarm', size=80)
+        if icon:
+            if not self._blink:   # inverted on black background
+                icon = ImageOps.invert(icon.convert('L')).convert('1')
+            img.paste(icon, ((W - 80) // 2, 100))
+
+        win95.text_centered(draw, W // 2, 230, 'ALARM', f.huge, fill=fg)
         win95.text_centered(draw, W // 2, 320,
                             f"{self._alarm.get('hour', 0):02d}:{self._alarm.get('minute', 0):02d}",
                             f.huge, fill=fg)
@@ -52,7 +60,7 @@ class AlarmScreen(BaseScreen):
         if label:
             win95.text_centered(draw, W // 2, 420, label, f.xlarge, fill=fg)
         win95.text_centered(draw, W // 2, 560, f'Fired at {self._fired_at}', f.medium, fill=fg)
-        win95.text_centered(draw, W // 2, 660, 'Press SELECT or BACK to dismiss', f.body, fill=fg)
+        win95.text_centered(draw, W // 2, 660, 'Press ACCEPT or BACK to dismiss', f.body, fill=fg)
 
         self._dirty = False
         return img

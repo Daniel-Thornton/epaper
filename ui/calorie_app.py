@@ -220,8 +220,7 @@ class CalorieApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f    = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'Calorie Logger', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'Calorie Logger', f.title, 'calorie', img)
 
         # Tab bar
         tab_h = 28

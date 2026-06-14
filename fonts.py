@@ -1,25 +1,30 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
-"""Font loading with graceful fallback to PIL default font."""
+"""
+Font loading — Win95 aesthetic: bold sans-serif throughout.
+Falls back to PIL built-in if no TrueType fonts are installed.
+"""
 from PIL import ImageFont
 import os
-
-_SEARCH_PATHS = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
-    '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
-]
 
 _BOLD_PATHS = [
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
     '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+    '/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf',
+]
+
+_REGULAR_PATHS = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+    '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
 ]
 
 _MONO_PATHS = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf',
     '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf',
 ]
 
@@ -31,8 +36,12 @@ def _find(paths):
     return None
 
 
-def load(size, bold=False, mono=False):
-    path = _find(_BOLD_PATHS if bold else (_MONO_PATHS if mono else _SEARCH_PATHS))
+def load(size, bold=True, mono=False):
+    """Load a font at the given pixel size. Bold by default for Win95 look."""
+    if mono:
+        path = _find(_MONO_PATHS)
+    else:
+        path = _find(_BOLD_PATHS if bold else _REGULAR_PATHS)
     if path:
         try:
             return ImageFont.truetype(path, size)
@@ -42,22 +51,28 @@ def load(size, bold=False, mono=False):
 
 
 class FontSet:
-    """Pre-loaded fonts at common sizes."""
+    """Pre-loaded fonts — all bold for the Win95 aesthetic."""
     def __init__(self):
+        # UI text (bold throughout — Win95 used MS Sans Serif Bold)
         self.small   = load(12)
-        self.body    = load(16)
-        self.medium  = load(20)
-        self.large   = load(26)
-        self.xlarge  = load(36)
-        self.huge    = load(56)
-        self.title   = load(20, bold=True)
-        self.bold_sm = load(14, bold=True)
-        self.bold_md = load(20, bold=True)
-        self.bold_lg = load(28, bold=True)
-        self.mono    = load(16, mono=True)
+        self.body    = load(15)
+        self.medium  = load(18)
+        self.large   = load(24)
+        self.xlarge  = load(34)
+        self.huge    = load(52)
+
+        # Title bars and emphasis
+        self.title   = load(17)
+        self.bold_sm = load(13)
+        self.bold_md = load(17)
+        self.bold_lg = load(24)
+
+        # Monospace (keyboard input display)
+        self.mono    = load(14, mono=True)
 
 
 _instance = None
+
 
 def get():
     global _instance

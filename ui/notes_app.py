@@ -199,8 +199,7 @@ class NotesApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'Notes', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'Notes', f.title, 'notes', img)
 
         if self._mode == 'list':
             self._render_list(draw, f)
@@ -218,7 +217,7 @@ class NotesApp(BaseScreen):
     def _render_list(self, draw, f):
         y0 = TB + 4
         draw.text((10, y0),
-                  f'{len(self._notes)} note(s)  |  UP/DOWN: scroll  SELECT: open/new',
+                  f'{len(self._notes)} note(s)  |  UP/DOWN: scroll  ACCEPT: open/new',
                   font=f.small, fill=0)
         y0 += 20
         visible = self._notes[self._scroll:self._scroll + VISIBLE]
@@ -253,7 +252,7 @@ class NotesApp(BaseScreen):
         draw.text((10, y0), note.get('modified', note.get('created', ''))[:19], font=f.small, fill=0)
         y0 += 22
 
-        body = note.get('body', '(empty — press SELECT → Edit Title to rename)')
+        body = note.get('body', '(empty — press ACCEPT → Edit Title to rename)')
         lines = []
         for para in body.split('\n'):
             while len(para) > 38:
@@ -269,7 +268,7 @@ class NotesApp(BaseScreen):
             draw.text((W - 56, y0), f'{self._view_scroll+1}/{len(lines)}', font=f.small, fill=0)
 
         draw.text((8, H - TK - 26),
-                  'UP/DOWN: scroll  SELECT: options  BACK: list',
+                  'UP/DOWN: scroll  ACCEPT: options  BACK: list',
                   font=f.small, fill=0)
 
     def _render_action_menu(self, draw, f):
@@ -288,4 +287,4 @@ class NotesApp(BaseScreen):
         win95.text_centered(draw, W // 2, 380, 'This cannot be undone.', f.small, fill=0)
         win95.draw_button(draw, 60,  420, 200, 478, 'DELETE',  f.medium, selected=True)
         win95.draw_button(draw, 220, 420, 400, 478, 'Cancel',  f.medium)
-        draw.text((8, H - TK - 26), 'SELECT/UP: delete  BACK/DOWN: cancel', font=f.small, fill=0)
+        draw.text((8, H - TK - 26), 'ACCEPT/UP: delete  BACK/DOWN: cancel', font=f.small, fill=0)

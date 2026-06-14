@@ -159,8 +159,7 @@ class TodoApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'To-Do List', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'To-Do List', f.title, 'todo', img)
 
         y0 = TB + 4
         # Status line
@@ -201,7 +200,7 @@ class TodoApp(BaseScreen):
 
         # Instructions
         draw.text((8, H - TK - 26),
-                  'SELECT: toggle done  DOWN past end: add  BACK: home',
+                  'ACCEPT: toggle done  DOWN past end: add  BACK: home',
                   font=f.small, fill=0)
 
         win95.draw_taskbar(draw, f.small, time.strftime('%H:%M'), 'To-Do')

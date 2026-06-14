@@ -117,8 +117,7 @@ class InfoApp(BaseScreen):
         draw = ImageDraw.Draw(img)
         f = self.app.fonts
 
-        draw.rectangle([0, 0, W, TB], fill=0)
-        draw.text((8, 4), 'System Info', font=f.title, fill=255)
+        win95.draw_title_bar(draw, 'System Info', f.title, 'info', img)
 
         y = TB + 10
         for label, val in self._info.items():
@@ -130,7 +129,7 @@ class InfoApp(BaseScreen):
                 break
 
         draw.text((8, H - TK - 26),
-                  f'Updated {int(time.time()-self._last_update)}s ago  SELECT: refresh  BACK: home',
+                  f'Updated {int(time.time()-self._last_update)}s ago  ACCEPT: refresh  BACK: home',
                   font=f.small, fill=0)
 
         win95.draw_taskbar(draw, f.small, time.strftime('%H:%M'), 'Info')
