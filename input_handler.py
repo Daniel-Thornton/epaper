@@ -3,13 +3,13 @@
 """
 6-button input abstraction.
 
-GPIO pins (BCM, adjust to match your HAT wiring):
-  UP     = 6
-  DOWN   = 19
-  LEFT   = 5
-  RIGHT  = 26
-  BACK   = 21
-  ACCEPT = 13
+GPIO pins (BCM):
+  UP     = 20
+  DOWN   = 13
+  LEFT   = 16
+  RIGHT  = 21
+  BACK   = 26
+  ACCEPT = 19
 
 Keyboard equivalents (always active when stdin is a TTY):
   Arrow keys          → UP / DOWN / LEFT / RIGHT
@@ -36,12 +36,12 @@ ACCEPT = 'ACCEPT'
 # ── GPIO pin → action mapping ─────────────────────────────────────────────────
 # Adjust these to match your HAT's wiring
 _GPIO_MAP = {
-    6:  UP,
-    19: DOWN,
-    5:  LEFT,
-    26: RIGHT,
-    21: BACK,
-    13: ACCEPT,
+    20: UP,
+    13: DOWN,
+    16: LEFT,
+    21: RIGHT,
+    26: BACK,
+    19: ACCEPT,
 }
 
 # ── Keyboard → action mapping ─────────────────────────────────────────────────
