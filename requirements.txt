@@ -1,0 +1,20 @@
+# Core (always required)
+Pillow>=9.0.0
+
+# Camera support (Raspberry Pi only)
+# picamera2      # installed via apt: sudo apt install python3-picamera2
+
+# QR code generation (for web apps)
+qrcode[pil]>=7.0
+
+# Google Calendar / Tasks integration (optional)
+# google-api-python-client>=2.0
+# google-auth-oauthlib>=0.5
+# google-auth-httplib2>=0.1
+
+# Web screenshot rendering (optional)
+# playwright      # after install: playwright install chromium
+
+# GPIO (Raspberry Pi only, usually pre-installed)
+# gpiozero        # installed via apt: sudo apt install python3-gpiozero
+# spidev          # installed via apt: sudo apt install python3-spidev
