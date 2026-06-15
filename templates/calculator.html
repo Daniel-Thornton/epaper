@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">Calculator</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar"><span>Edit</span><span>View</span></div>
+
+  <div class="content">
+    <div class="calc-display">{{ display }}</div>
+
+    <div class="calc-grid">
+      {% set flat_idx = namespace(v=0) %}
+      {% for row in buttons %}
+        {% for btn in row %}
+          {% set is_sel = flat_idx.v == cursor %}
+          {% if btn in ['÷','×','-','+'] %}
+            {% set cls = 'op' %}
+          {% elif btn == '=' %}
+            {% set cls = 'eq' %}
+          {% elif btn == 'C' %}
+            {% set cls = 'op' %}
+          {% else %}
+            {% set cls = '' %}
+          {% endif %}
+          <div class="calc-btn {{ cls }} {{ 'selected' if is_sel else '' }}">{{ btn }}</div>
+          {% set flat_idx.v = flat_idx.v + 1 %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-panel">UP/DOWN move &nbsp; SELECT press &nbsp; BACK delete / home</span>
+  </div>
+</div>
+</body>
+</html>

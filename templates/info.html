@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">&#8505; System Information</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar"><span>File</span><span>View</span></div>
+
+  <div class="content">
+    <table class="info-table">
+      {% for key, value in info.items() %}
+      <tr>
+        <td>{{ key }}</td>
+        <td>{{ value }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-panel">Live data</span>
+    <span class="status-panel">BACK home</span>
+  </div>
+</div>
+</body>
+</html>

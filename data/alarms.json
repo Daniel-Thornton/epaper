@@ -1,1 +1,4 @@
-[]
+[
+  {"id": 1, "time": "07:30", "label": "Wake up",   "enabled": true},
+  {"id": 2, "time": "09:00", "label": "Stand-up",  "enabled": false}
+]

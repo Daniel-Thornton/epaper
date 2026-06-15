@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">&#9714; Clock</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab {{ 'active' if tab == 0 else '' }}">Clock</div>
+    <div class="tab {{ 'active' if tab == 1 else '' }}">Timer</div>
+    <div class="tab {{ 'active' if tab == 2 else '' }}">Alarms</div>
+  </div>
+
+  {% if tab == 0 %}
+  <!-- Clock tab -->
+  <div class="content">
+    <div class="clock-face">
+      <div class="clock-time">{{ now.strftime('%H:%M') }}</div>
+      <div class="clock-seconds">:{{ now.strftime('%S') }}</div>
+      <div class="clock-date">{{ now.strftime('%A, %d %B %Y') }}</div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">UP/DOWN switch tabs &nbsp; BACK home</span>
+  </div>
+
+  {% elif tab == 1 %}
+  <!-- Timer tab -->
+  <div class="content">
+    <div class="timer-display">
+      {% if remaining is not none %}
+        {% set mins = remaining // 60 %}
+        {% set secs = remaining % 60 %}
+        <div class="timer-time" style="{{ 'color:#000080' if timer_running else '' }}">
+          {{ '%02d' % mins }}:{{ '%02d' % secs }}
+        </div>
+        <div class="timer-hint">
+          {% if timer_running %}Running — SELECT to stop{% else %}Stopped — SELECT to start{% endif %}
+        </div>
+      {% else %}
+        <div class="timer-time">{{ '%02d' % (timer_total // 60) }}:{{ '%02d' % (timer_total % 60) }}</div>
+        <div class="timer-hint">SELECT to start</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">SELECT start/stop &nbsp; UP/DOWN tabs &nbsp; BACK home</span>
+  </div>
+
+  {% else %}
+  <!-- Alarms tab -->
+  <div class="content">
+    {% if alarms %}
+      {% for a in alarms %}
+      <div class="alarm-row {{ 'selected' if loop.index0 == alarm_idx else '' }}">
+        <span class="alarm-time">{{ a.time }}</span>
+        <span class="alarm-label">{{ a.label }}</span>
+        <span class="alarm-status">{{ 'ON' if a.enabled else 'off' }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="alarm-row" style="color:#808080">No alarms set. Edit data/alarms.json.</div>
+    {% endif %}
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">{{ alarms|length }} alarm{{ 's' if alarms|length != 1 else '' }}</span>
+    <span class="status-panel">BACK home</span>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

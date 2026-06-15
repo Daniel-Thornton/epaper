@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">&#9745; To-Do List</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar">
+    <span>File</span><span>Edit</span>
+  </div>
+
+  <div class="content">
+    {% if todos %}
+      {% for item in todos %}
+      <div class="todo-row {{ 'selected' if loop.index0 == selected else '' }}">
+        <div class="checkbox">{% if item.done %}&#10003;{% endif %}</div>
+        <span class="todo-text {{ 'done' if item.done else '' }}">{{ item.text }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="todo-row" style="color:#808080">
+        No items. Edit data/todos.json to add tasks.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="status-bar">
+    <span class="status-panel">{{ done }} / {{ todos|length }} done</span>
+    <span class="status-panel">SELECT toggle &nbsp; BACK home</span>
+  </div>
+</div>
+</body>
+</html>

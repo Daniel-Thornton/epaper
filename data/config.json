@@ -1,7 +1,6 @@
 {
-  "clock_format": "24h",
-  "full_refresh_interval": 600,
-  "partial_refresh_limit": 20,
-  "auto_sleep_mins": 0,
-  "gcal_enabled": false
+  "timezone": "UTC",
+  "refresh_rate": 60,
+  "partial_limit": 20,
+  "display_mode": "BW"
 }

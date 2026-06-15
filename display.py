@@ -1,60 +1,47 @@
-#!/usr/bin/python3
-# -*- coding:utf-8 -*-
-import logging
-import time
+import sys
+from pathlib import Path
 from PIL import Image
 
-logger = logging.getLogger(__name__)
+try:
+    sys.path.insert(0, str(Path(__file__).parent / 'lib'))
+    from waveshare_epd import epd4in26
+    HW_AVAILABLE = True
+except Exception as e:
+    print(f'[display] EPD driver not available ({e}) — saving frames to /tmp/epaper_preview.png')
+    HW_AVAILABLE = False
 
-W = 480   # portrait width  (== epd.height == 480)
-H = 800   # portrait height (== epd.width  == 800)
-
-PARTIAL_LIMIT = 20
-FULL_REFRESH_SECS = 600
+PREVIEW_PATH = '/tmp/epaper_preview.png'
 
 
-class DisplayManager:
+class Display:
+    PARTIAL_LIMIT = 20
+
     def __init__(self):
-        from waveshare_epd import epd4in26
-        self.epd = epd4in26.EPD()
-        self.epd.init()
-        self.epd.Clear()
+        self._epd = None
         self._partial_count = 0
-        self._last_full = time.time()
-        logger.info("DisplayManager ready (%dx%d portrait)", W, H)
+        if HW_AVAILABLE:
+            self._epd = epd4in26.EPD()
+            self._epd.init()
+            self._epd.Clear()
+            print('[display] EPD initialised')
 
-    def _buf(self, image):
-        return self.epd.getbuffer(image)
-
-    def full_refresh(self, image):
-        logger.debug("full refresh")
-        self.epd.init()
-        self.epd.display_Base(self._buf(image))
-        self._partial_count = 0
-        self._last_full = time.time()
-
-    def fast_refresh(self, image):
-        """Full-frame fast refresh. Resets base so partial can follow."""
-        logger.debug("fast refresh")
-        self.epd.init()
-        self.epd.display_Base(self._buf(image))
-        self._partial_count = 0
-        self._last_full = time.time()
-
-    def partial_refresh(self, image):
-        if (self._partial_count >= PARTIAL_LIMIT or
-                time.time() - self._last_full >= FULL_REFRESH_SECS):
-            logger.debug("partial→full (limit reached)")
-            self.full_refresh(image)
+    def show(self, img: Image.Image, force_full: bool = False):
+        """Push a 480×800 1-bit PIL Image to the display."""
+        if not HW_AVAILABLE:
+            # On non-Pi: save preview PNG so the design can be inspected
+            img.save(PREVIEW_PATH)
+            print(f'[display] preview saved to {PREVIEW_PATH}')
             return
-        logger.debug("partial refresh #%d", self._partial_count)
-        self.epd.display_Partial(self._buf(image))
-        self._partial_count += 1
+
+        do_full = force_full or (self._partial_count >= self.PARTIAL_LIMIT)
+        if do_full:
+            self._epd.init()
+            self._epd.display_Base(self._epd.getbuffer(img))
+            self._partial_count = 0
+        else:
+            self._epd.display_Partial(self._epd.getbuffer(img))
+            self._partial_count += 1
 
     def sleep(self):
-        self.epd.sleep()
-
-    @staticmethod
-    def new_image():
-        """Return a blank white portrait canvas."""
-        return Image.new('1', (W, H), 255)
+        if self._epd:
+            self._epd.sleep()

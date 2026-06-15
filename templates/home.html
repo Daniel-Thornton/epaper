@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div id="desktop">
+  <div class="icon-grid">
+    {% for label, screen in apps %}
+    {% set i = loop.index0 %}
+    <div class="icon-cell {{ 'selected' if i == selected else '' }}">
+      <div class="icon-box raised">{{ icons[i] }}</div>
+      <span class="icon-label">{{ label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="taskbar">
+  <div class="start-btn raised">&#9654; Start</div>
+  <div style="flex:1"></div>
+  <div class="taskbar-clock sunken">{{ clock }}</div>
+</div>
+</body>
+</html>

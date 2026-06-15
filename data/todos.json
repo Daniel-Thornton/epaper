@@ -1,1 +1,7 @@
-[]
+[
+  {"id": 1, "text": "Set up Raspberry Pi 5",          "done": true},
+  {"id": 2, "text": "Configure e-paper display",       "done": true},
+  {"id": 3, "text": "Install EpaperUI",                "done": false},
+  {"id": 4, "text": "Add more notes",                  "done": false},
+  {"id": 5, "text": "Connect to home network",         "done": false}
+]

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">&#9881; Settings</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar"><span>File</span></div>
+
+  <div class="content">
+    {% for key, value in items %}
+    <div class="settings-row {{ 'selected' if loop.index0 == selected else '' }}">
+      <span class="settings-key">{{ key }}</span>
+      <span class="settings-value">{{ value }}</span>
+    </div>
+    {% endfor %}
+
+    <div style="padding:16px 12px; color:#808080; font-size:12px; border-top:2px solid #e0e0e0; margin-top:8px">
+      <p>Edit <strong>data/config.json</strong> to change settings.</p>
+      <p style="margin-top:8px">Lib: Waveshare epd4in26 &nbsp;|&nbsp; Pi 5 + lgpio</p>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-panel">UP/DOWN navigate &nbsp; BACK home</span>
+  </div>
+</div>
+</body>
+</html>

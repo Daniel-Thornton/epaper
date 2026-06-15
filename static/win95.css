@@ -1,0 +1,580 @@
+/* ════════════════════════════════════════════════════════════════════
+   Win95 stylesheet — 480 × 800 portrait e-paper
+   Color notes for 1-bit rendering:
+     #000080 navy  → black   ✓  (used for title bars, selections)
+     #008080 teal  → black   ✓  (desktop background)
+     #c0c0c0 gray  → white   ✓  (window surfaces, buttons)
+     #ffffff white → white   ✓
+     #000000 black → black   ✓
+   ════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+html, body {
+  width: 480px;
+  height: 800px;
+  overflow: hidden;
+  font-family: 'Arial', 'Liberation Sans', sans-serif;
+  font-size: 13px;
+  color: #000;
+  background: #008080;
+}
+
+/* ── 3-D border helpers ──────────────────────────────────────────── */
+.raised {
+  border-top:    2px solid #fff;
+  border-left:   2px solid #fff;
+  border-right:  2px solid #404040;
+  border-bottom: 2px solid #404040;
+  outline: 1px solid #000;
+}
+
+.sunken {
+  border-top:    2px solid #404040;
+  border-left:   2px solid #404040;
+  border-right:  2px solid #fff;
+  border-bottom: 2px solid #fff;
+  outline: 1px solid #000;
+}
+
+/* ── Taskbar ─────────────────────────────────────────────────────── */
+.taskbar {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 480px;
+  height: 32px;
+  background: #c0c0c0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  border-top: 2px solid #fff;
+  z-index: 200;
+}
+
+.start-btn {
+  height: 24px;
+  padding: 0 10px;
+  background: #c0c0c0;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  user-select: none;
+}
+
+.taskbar-clock {
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Desktop icon grid ───────────────────────────────────────────── */
+#desktop {
+  width: 480px;
+  height: 768px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  width: 472px;
+  height: 752px;
+  padding: 12px;
+}
+
+.icon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: default;
+  user-select: none;
+  padding: 8px 4px;
+}
+
+.icon-box {
+  width: 64px;
+  height: 64px;
+  background: #c0c0c0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.icon-label {
+  font-size: 12px;
+  text-align: center;
+  color: #fff;
+  padding: 1px 4px;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000,
+               1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+.icon-cell.selected .icon-label {
+  background: #000080;
+  color: #fff;
+  text-shadow: none;
+}
+
+.icon-cell.selected .icon-box {
+  outline: 2px dotted #fff;
+  outline-offset: 2px;
+}
+
+/* ── Window chrome ───────────────────────────────────────────────── */
+.window {
+  width: 480px;
+  height: 800px;
+  background: #c0c0c0;
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  overflow: hidden;
+}
+
+.title-bar {
+  height: 28px;
+  background: #000080;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.title-bar .title {
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.title-bar .win-btn {
+  width: 18px;
+  height: 18px;
+  background: #c0c0c0;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #404040;
+  border-bottom: 1px solid #404040;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.menu-bar {
+  height: 24px;
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 16px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-bar {
+  height: 22px;
+  background: #c0c0c0;
+  border-top: 1px solid #808080;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.status-panel {
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  padding: 1px 6px;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  background: #c0c0c0;
+  border-bottom: 2px solid #808080;
+  padding: 4px 6px 0;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 4px 16px;
+  font-size: 12px;
+  border-top:   2px solid #fff;
+  border-left:  2px solid #fff;
+  border-right: 2px solid #808080;
+  border-bottom: none;
+  margin-right: 2px;
+  background: #c0c0c0;
+  cursor: default;
+  position: relative;
+  bottom: -2px;
+}
+
+.tab.active {
+  border-bottom: 2px solid #c0c0c0;
+  background: #c0c0c0;
+  z-index: 1;
+  font-weight: bold;
+}
+
+/* ── List / Notes ────────────────────────────────────────────────── */
+.list-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 44px;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.list-row.selected {
+  background: #000080;
+  color: #fff;
+}
+
+.list-row .meta {
+  font-size: 11px;
+  color: #606060;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.list-row.selected .meta { color: #c0c0c0; }
+
+.note-title-bar {
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  border-bottom: 2px solid #c0c0c0;
+  background: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.note-body {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+}
+
+/* ── To-Do ───────────────────────────────────────────────────────── */
+.todo-row {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 48px;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.todo-row.selected {
+  background: #000080;
+  color: #fff;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #808080;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.todo-row.selected .checkbox {
+  border-color: #fff;
+  background: #000080;
+  color: #fff;
+}
+
+.todo-text.done {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+/* ── Clock ───────────────────────────────────────────────────────── */
+.clock-face {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.clock-time {
+  font-size: 80px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 4px;
+  line-height: 1;
+}
+
+.clock-seconds {
+  font-size: 36px;
+  font-family: 'Courier New', monospace;
+  color: #404040;
+}
+
+.clock-date {
+  font-size: 16px;
+  color: #404040;
+  margin-top: 8px;
+}
+
+.alarm-row {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.alarm-row.selected { background: #000080; color: #fff; }
+
+.alarm-time { font-size: 20px; font-weight: bold; font-family: 'Courier New', monospace; }
+.alarm-label { flex: 1; }
+.alarm-status { font-size: 11px; }
+
+.timer-display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.timer-time {
+  font-size: 72px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.timer-hint { font-size: 13px; color: #606060; }
+
+/* ── Calculator ──────────────────────────────────────────────────── */
+.calc-display {
+  margin: 8px;
+  padding: 8px 12px;
+  background: #d4edda;
+  border-top:   2px solid #808080;
+  border-left:  2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  font-size: 32px;
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 5px;
+  padding: 0 8px 8px;
+  flex: 1;
+}
+
+.calc-btn {
+  background: #c0c0c0;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top:   2px solid #fff;
+  border-left:  2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  cursor: default;
+  user-select: none;
+}
+
+.calc-btn.selected {
+  background: #000080;
+  color: #fff;
+  border-top:   2px solid #404040;
+  border-left:  2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.calc-btn.op   { background: #d0d0d0; }
+.calc-btn.eq   { background: #a0a0c0; }
+.calc-btn.selected.op,
+.calc-btn.selected.eq { background: #000080; }
+
+/* ── Settings ────────────────────────────────────────────────────── */
+.settings-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 52px;
+  gap: 12px;
+}
+
+.settings-row.selected { background: #000080; color: #fff; }
+
+.settings-key {
+  font-weight: bold;
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.settings-value { flex: 1; color: #404040; }
+.settings-row.selected .settings-value { color: #c0c0c0; }
+
+/* ── Pi Info ─────────────────────────────────────────────────────── */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.info-table tr { border-bottom: 1px solid #e0e0e0; }
+
+.info-table td {
+  padding: 10px 10px;
+  vertical-align: middle;
+}
+
+.info-table td:first-child {
+  font-weight: bold;
+  background: #f0f0f0;
+  width: 38%;
+  border-right: 1px solid #ddd;
+}
+
+/* ── Camera ──────────────────────────────────────────────────────── */
+.camera-frame {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.camera-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.no-photo-msg {
+  color: #808080;
+  font-size: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-photo-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+/* ── Web app / QR ────────────────────────────────────────────────── */
+.qr-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  background: #fff;
+}
+
+.qr-screen img {
+  max-width: 260px;
+  max-height: 260px;
+  border: 1px solid #000;
+}
+
+.qr-app-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.qr-desc {
+  font-size: 13px;
+  color: #404040;
+  text-align: center;
+}
+
+.qr-url {
+  font-size: 10px;
+  color: #808080;
+  word-break: break-all;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { display: none; }

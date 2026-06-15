@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">&#9685; Camera</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar"><span>File</span><span>Capture</span></div>
+
+  <div class="content">
+    <div class="camera-frame">
+      {% if has_photo %}
+        <img src="/static/last_photo.jpg?t={{ range(999999)|random }}" alt="Last photo">
+      {% else %}
+        <div class="no-photo-msg">
+          <div class="no-photo-icon">&#9685;</div>
+          <div>No photo taken yet</div>
+          <div style="font-size:12px; margin-top:8px">Press SELECT to capture</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-panel">SELECT capture &nbsp; BACK home</span>
+    {% if has_photo %}
+    <span class="status-panel">static/last_photo.jpg</span>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

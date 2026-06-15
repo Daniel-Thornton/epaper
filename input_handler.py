@@ -1,155 +1,257 @@
-#!/usr/bin/python3
-# -*- coding:utf-8 -*-
-"""
-6-button input abstraction.
+import json
+import os
+import time
+from pathlib import Path
 
-GPIO pins (BCM):
-  UP     = 20
-  DOWN   = 13
-  LEFT   = 16
-  RIGHT  = 21
-  BACK   = 26
-  ACCEPT = 19
+# Pi 5 / Bookworm: only lgpio backend works
+os.environ.setdefault('GPIOZERO_PIN_FACTORY', 'lgpio')
 
-Keyboard equivalents (always active when stdin is a TTY):
-  Arrow keys          → UP / DOWN / LEFT / RIGHT
-  w/a/s/d             → UP / LEFT / DOWN / RIGHT
-  Enter / Space       → ACCEPT
-  Escape / Backspace  → BACK
-  q / Ctrl-C          → QUIT
-"""
-import sys
-import queue
-import threading
-import logging
-import select as _select
+try:
+    from gpiozero import Button
+    GPIO_AVAILABLE = True
+except Exception:
+    GPIO_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+from state import state, APPS, CALC_FLAT
 
-UP     = 'UP'
-DOWN   = 'DOWN'
-LEFT   = 'LEFT'
-RIGHT  = 'RIGHT'
-BACK   = 'BACK'
-ACCEPT = 'ACCEPT'
+DATA_DIR = Path(__file__).parent / 'data'
 
-# ── GPIO pin → action mapping ─────────────────────────────────────────────────
-# Adjust these to match your HAT's wiring
-_GPIO_MAP = {
-    20: UP,
-    13: DOWN,
-    16: LEFT,
-    21: RIGHT,
-    26: BACK,
-    19: ACCEPT,
+PIN_UP     = 21
+PIN_DOWN   = 20
+PIN_BACK   = 16
+PIN_SELECT = 26
+
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+def _load(fname, default):
+    p = DATA_DIR / fname
+    if p.exists():
+        with open(p) as f:
+            return json.load(f)
+    return default
+
+
+def _save(fname, data):
+    DATA_DIR.mkdir(exist_ok=True)
+    with open(DATA_DIR / fname, 'w') as f:
+        json.dump(data, f, indent=2)
+
+
+# ── per-screen handlers ───────────────────────────────────────────────────────
+
+def _home(btn):
+    s = state
+    n = len(APPS)
+    if btn == 'UP':
+        s.selected = (s.selected - 1) % n
+        s.mark_dirty()
+    elif btn == 'DOWN':
+        s.selected = (s.selected + 1) % n
+        s.mark_dirty()
+    elif btn == 'SELECT':
+        s.go(APPS[s.selected][1])
+
+
+def _notes(btn):
+    s = state
+    notes = _load('notes.json', [])
+    if s.notes_view == 'list':
+        if btn == 'UP':
+            s.notes_idx = max(0, s.notes_idx - 1)
+            s.mark_dirty()
+        elif btn == 'DOWN':
+            s.notes_idx = min(len(notes) - 1, max(0, s.notes_idx + 1))
+            s.mark_dirty()
+        elif btn == 'SELECT' and notes:
+            s.notes_view = 'view'
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.go('home')
+    else:
+        if btn == 'BACK':
+            s.notes_view = 'list'
+            s.mark_dirty()
+
+
+def _todo(btn):
+    s = state
+    todos = _load('todos.json', [])
+    if btn == 'UP':
+        s.todo_idx = max(0, s.todo_idx - 1)
+        s.mark_dirty()
+    elif btn == 'DOWN':
+        s.todo_idx = min(len(todos) - 1, max(0, s.todo_idx + 1))
+        s.mark_dirty()
+    elif btn == 'SELECT' and todos:
+        todos[s.todo_idx]['done'] = not todos[s.todo_idx]['done']
+        _save('todos.json', todos)
+        s.mark_dirty()
+    elif btn == 'BACK':
+        s.go('home')
+
+
+def _clock(btn):
+    s = state
+    if btn == 'UP':
+        s.clock_tab = (s.clock_tab - 1) % 3
+        s.mark_dirty()
+    elif btn == 'DOWN':
+        s.clock_tab = (s.clock_tab + 1) % 3
+        s.mark_dirty()
+    elif btn == 'SELECT' and s.clock_tab == 1:
+        # Toggle timer on/off
+        import time as _t
+        if s.timer_end is None:
+            s.timer_end = _t.monotonic() + s.timer_total
+        else:
+            s.timer_end = None
+        s.mark_dirty()
+    elif btn == 'BACK':
+        s.go('home')
+
+
+def _calc(btn):
+    s = state
+    n = len(CALC_FLAT)
+    if btn == 'UP':
+        s.calc_cursor = (s.calc_cursor - 4) % n
+        s.mark_dirty()
+    elif btn == 'DOWN':
+        s.calc_cursor = (s.calc_cursor + 4) % n
+        s.mark_dirty()
+    elif btn == 'SELECT':
+        _press(CALC_FLAT[s.calc_cursor])
+    elif btn == 'BACK':
+        if s.calc_expr:
+            s.calc_expr = s.calc_expr[:-1]
+            s.calc_display = s.calc_expr or '0'
+            s.mark_dirty()
+        else:
+            s.go('home')
+
+
+def _press(key):
+    s = state
+    if key == 'C':
+        s.calc_expr = ''
+        s.calc_display = '0'
+    elif key == '⌫':
+        s.calc_expr = s.calc_expr[:-1]
+        s.calc_display = s.calc_expr or '0'
+    elif key == '=':
+        try:
+            expr = s.calc_expr.replace('×', '*').replace('÷', '/')
+            result = eval(expr)  # local device, acceptable
+            # Format: remove trailing .0 for clean integers
+            if isinstance(result, float) and result == int(result):
+                result = int(result)
+            s.calc_display = str(result)
+            s.calc_expr = str(result)
+        except Exception:
+            s.calc_display = 'Error'
+            s.calc_expr = ''
+    elif key == '±':
+        try:
+            val = eval(s.calc_expr or '0') * -1
+            s.calc_expr = str(val)
+            s.calc_display = s.calc_expr
+        except Exception:
+            pass
+    elif key == '%':
+        try:
+            val = eval(s.calc_expr or '0') / 100
+            s.calc_expr = str(val)
+            s.calc_display = s.calc_expr
+        except Exception:
+            pass
+    else:
+        if s.calc_display == '0' and key.isdigit():
+            s.calc_expr = key
+        else:
+            s.calc_expr += key
+        s.calc_display = s.calc_expr
+    s.mark_dirty()
+
+
+def _settings(btn):
+    s = state
+    n = 4
+    if btn == 'UP':
+        s.settings_idx = max(0, s.settings_idx - 1)
+        s.mark_dirty()
+    elif btn == 'DOWN':
+        s.settings_idx = min(n - 1, s.settings_idx + 1)
+        s.mark_dirty()
+    elif btn == 'BACK':
+        s.go('home')
+
+
+def _camera(btn):
+    s = state
+    if btn == 'SELECT':
+        _capture()
+    elif btn == 'BACK':
+        s.go('home')
+
+
+def _capture():
+    try:
+        from picamera2 import Picamera2
+        cam = Picamera2()
+        cam.configure(cam.create_still_configuration())
+        cam.start()
+        time.sleep(1.5)
+        save_path = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
+        cam.capture_file(save_path)
+        cam.stop()
+        cam.close()
+        print(f'[camera] captured to {save_path}')
+    except Exception as e:
+        print(f'[camera] error: {e}')
+    state.mark_dirty()
+
+
+# ── public dispatch ───────────────────────────────────────────────────────────
+
+_HANDLERS = {
+    'home':              _home,
+    'notes':             _notes,
+    'todo':              _todo,
+    'clock':             _clock,
+    'calculator':        _calc,
+    'settings':          _settings,
+    'camera':            _camera,
+    'webapp_chat':       lambda b: b == 'BACK' and state.go('home'),
+    'webapp_calories':   lambda b: b == 'BACK' and state.go('home'),
+    'info':              lambda b: b == 'BACK' and state.go('home'),
 }
 
-# ── Keyboard → action mapping ─────────────────────────────────────────────────
-_KEY_MAP = {
-    # WASD
-    'w': UP,
-    's': DOWN,
-    'a': LEFT,
-    'd': RIGHT,
-    # Arrow keys (ANSI escape sequences)
-    '\x1b[A': UP,
-    '\x1b[B': DOWN,
-    '\x1b[D': LEFT,
-    '\x1b[C': RIGHT,
-    # Accept
-    '\n':  ACCEPT,
-    '\r':  ACCEPT,
-    ' ':   ACCEPT,
-    # Back
-    '\x1b': BACK,       # Escape
-    '\x7f': BACK,       # Backspace (DEL)
-    '\x08': BACK,       # Backspace (BS)
-}
+
+def handle(btn: str):
+    h = _HANDLERS.get(state.screen)
+    if h:
+        h(btn)
 
 
-class InputHandler:
-    def __init__(self):
-        self._q = queue.Queue()
-        self._setup_gpio()
-        self._setup_keyboard()
+def start():
+    """Wire up GPIO buttons. Returns button objects (keep alive)."""
+    if not GPIO_AVAILABLE:
+        print('[input] GPIO not available — use keyboard fallback (--keyboard flag)')
+        return ()
 
-    # ── GPIO ──────────────────────────────────────────────────────────────────
+    def cb(name):
+        return lambda: handle(name)
 
-    def _setup_gpio(self):
-        try:
-            from gpiozero import Button
-            self._buttons = {}
-            for pin, action in _GPIO_MAP.items():
-                btn = Button(pin, pull_up=True, bounce_time=0.05)
-                btn.when_pressed = lambda a=action: self._q.put(a)
-                self._buttons[pin] = btn
-            logger.info("GPIO buttons ready — pins %s", list(_GPIO_MAP.keys()))
-        except Exception as e:
-            self._buttons = {}
-            logger.info("GPIO not available (%s)", e)
-
-    # ── Keyboard ──────────────────────────────────────────────────────────────
-
-    def _setup_keyboard(self):
-        if not sys.stdin.isatty():
-            logger.info("stdin is not a TTY — keyboard input disabled")
-            return
-        t = threading.Thread(target=self._keyboard_thread, daemon=True)
-        t.start()
-        logger.info("Keyboard ready  (wasd / arrows / Enter=ACCEPT / Esc=BACK / q=quit)")
-
-    def _keyboard_thread(self):
-        try:
-            import tty, termios
-        except ImportError:
-            logger.warning("tty/termios unavailable — keyboard input disabled")
-            return
-
-        fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd)
-        try:
-            tty.setraw(fd)
-            while True:
-                ch = sys.stdin.read(1)
-                if not ch:
-                    break
-
-                if ch == '\x1b':
-                    # Peek for up to 2 more bytes within 50 ms (arrow keys)
-                    rest = ''
-                    for _ in range(2):
-                        r, _, _ = _select.select([sys.stdin], [], [], 0.05)
-                        if r:
-                            rest += sys.stdin.read(1)
-                        else:
-                            break
-                    ch = ch + rest
-
-                action = _KEY_MAP.get(ch)
-                if action:
-                    self._q.put(action)
-                elif ch in ('q', 'Q', '\x03'):
-                    self._q.put('QUIT')
-                    break
-        except Exception as e:
-            logger.debug("Keyboard thread exit: %s", e)
-        finally:
-            try:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old)
-            except Exception:
-                pass
-
-    # ── Public API ────────────────────────────────────────────────────────────
-
-    def get_event(self, timeout=0.05):
-        try:
-            return self._q.get(timeout=timeout)
-        except queue.Empty:
-            return None
-
-    def flush(self):
-        while not self._q.empty():
-            try:
-                self._q.get_nowait()
-            except queue.Empty:
-                break
+    btns = (
+        Button(PIN_UP,     pull_up=True, bounce_time=0.08),
+        Button(PIN_DOWN,   pull_up=True, bounce_time=0.08),
+        Button(PIN_BACK,   pull_up=True, bounce_time=0.08),
+        Button(PIN_SELECT, pull_up=True, bounce_time=0.08),
+    )
+    btns[0].when_pressed = cb('UP')
+    btns[1].when_pressed = cb('DOWN')
+    btns[2].when_pressed = cb('BACK')
+    btns[3].when_pressed = cb('SELECT')
+    print('[input] GPIO buttons registered')
+    return btns
