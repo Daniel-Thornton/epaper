@@ -10,8 +10,12 @@
     {% for label, screen in apps %}
     {% set i = loop.index0 %}
     <div class="icon-cell {{ 'selected' if i == selected else '' }}">
-      <div class="icon-box raised">
-        <img src="/static/icons/{{ icon_files[i] }}" alt="{{ label }}">
+      <div class="icon-img-wrap">
+        <img src="/static/icons/{{ icon_files[i] }}" class="app-icon" alt="{{ label }}">
+        <img src="/static/icons/Shortcut.png" class="shortcut-badge" alt="">
+        {% if i == selected %}
+        <img src="/static/icons/cursor_hand.png" class="icon-cursor" alt="">
+        {% endif %}
       </div>
       <span class="icon-label">{{ label }}</span>
     </div>

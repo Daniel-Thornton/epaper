@@ -17,15 +17,15 @@ APP_ICONS = ['✎', '✔', '◉', '◷', '#', '⚙', 'π', '♪', '✉', '⊕']
 
 APP_ICON_FILES = [
     'notes.png',
-    'todo.png',
-    'camera.png',
+    'todo_list.png',
+    'camera-0.png',
     'clock.png',
     'calculator.png',
-    'settings.png',
-    'info.png',
+    'gears-0.png',
+    'INFO.png',
     'voice.png',
     'chat.png',
-    'calories.png',
+    'Dark Agent.png',
 ]
 
 CALC_BUTTONS = [

@@ -62,6 +62,7 @@
     {% if alarms %}
       {% for a in alarms %}
       <div class="alarm-row {{ 'selected' if loop.index0 == alarm_idx else '' }}">
+        {% if loop.index0 == alarm_idx %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
         <span class="alarm-time">{{ a.time }}</span>
         <span class="alarm-label">{{ a.label }}</span>
         <span class="alarm-status">{{ 'ON' if a.enabled else 'off' }}</span>

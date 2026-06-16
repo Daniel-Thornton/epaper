@@ -7,7 +7,7 @@
 <body>
 <div class="window">
   <div class="title-bar">
-    <img src="/static/icons/todo.png" class="title-icon" alt="">
+    <img src="/static/icons/todo_list.png" class="title-icon" alt="">
     <span class="title">To-Do List</span>
     <div class="win-btn">&#8212;</div>
     <div class="win-btn">&#9744;</div>
@@ -18,6 +18,7 @@
   <div class="content">
     {% for item in todos %}
     <div class="todo-row {{ 'selected' if loop.index0 == selected else '' }}">
+      {% if loop.index0 == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
       <div class="checkbox">{% if item.done %}&#10003;{% endif %}</div>
       <span class="todo-text {{ 'done' if item.done else '' }}">{{ item.text }}</span>
     </div>
@@ -25,6 +26,7 @@
 
     <!-- New Task action -->
     <div class="todo-row new-action {{ 'selected' if selected == todos|length else '' }}">
+      {% if selected == todos|length %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
       <div class="checkbox" style="font-size:16px; font-weight:bold">+</div>
       <span>New Task &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
     </div>
