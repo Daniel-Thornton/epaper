@@ -74,7 +74,7 @@ def index():
         if s.notes_view == 'list':
             return render_template('notes.html', view='list', notes=notes,
                                    selected=s.notes_idx)
-        note = notes[s.notes_idx] if 0 <= s.notes_idx < len(notes) else {}
+        note = notes[s.notes_idx - 1] if 1 <= s.notes_idx <= len(notes) else {}
         return render_template('notes.html', view='view', note=note)
 
     if sc == 'todo':

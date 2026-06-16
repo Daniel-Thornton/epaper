@@ -83,6 +83,7 @@ def _home(btn):
         s.mark_dirty()
     elif btn == 'ACCEPT':
         dest = APPS[s.selected][1]
+        s.home_selected = s.selected   # remember position before leaving
         if dest == 'camera':
             camera.start(on_frame=state.mark_dirty)
         s.go(dest)
@@ -92,25 +93,26 @@ def _notes(btn):
     s = state
     notes = _load('notes.json', [])
     n = len(notes)
+    # Index 0 = "+ New Note", indices 1..n = notes[0..n-1]
 
     if s.notes_view == 'list':
         if btn in ('UP', 'LEFT'):
             s.notes_idx = max(0, s.notes_idx - 1)
             s.mark_dirty()
         elif btn in ('DOWN', 'RIGHT'):
-            s.notes_idx = min(n, s.notes_idx + 1)   # n = "+ New Note" item
+            s.notes_idx = min(n, s.notes_idx + 1)
             s.mark_dirty()
         elif btn == 'ACCEPT':
-            if s.notes_idx < n:
-                s.notes_view = 'view'
-                s.mark_dirty()
-            else:
+            if s.notes_idx == 0:
                 s.go('text_input',
                      ti_prompt='New Note — speak or type',
                      ti_purpose='add_note',
                      ti_return='notes',
                      ti_value='',
                      ti_kb_cursor=0)
+            else:
+                s.notes_view = 'view'
+                s.mark_dirty()
         elif btn == 'BACK':
             s.go('home')
     else:
@@ -123,25 +125,26 @@ def _todo(btn):
     s = state
     todos = _load('todos.json', [])
     n = len(todos)
+    # Index 0 = "+ New Task", indices 1..n = todos[0..n-1]
 
     if btn in ('UP', 'LEFT'):
         s.todo_idx = max(0, s.todo_idx - 1)
         s.mark_dirty()
     elif btn in ('DOWN', 'RIGHT'):
-        s.todo_idx = min(n, s.todo_idx + 1)         # n = "+ New Task" item
+        s.todo_idx = min(n, s.todo_idx + 1)
         s.mark_dirty()
     elif btn == 'ACCEPT':
-        if s.todo_idx < n:
-            todos[s.todo_idx]['done'] = not todos[s.todo_idx]['done']
-            _save('todos.json', todos)
-            s.mark_dirty()
-        else:
+        if s.todo_idx == 0:
             s.go('text_input',
                  ti_prompt='New Task — speak or type',
                  ti_purpose='add_todo',
                  ti_return='todo',
                  ti_value='',
                  ti_kb_cursor=0)
+        else:
+            todos[s.todo_idx - 1]['done'] = not todos[s.todo_idx - 1]['done']
+            _save('todos.json', todos)
+            s.mark_dirty()
     elif btn == 'BACK':
         s.go('home')
 

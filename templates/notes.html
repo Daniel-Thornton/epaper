@@ -19,20 +19,20 @@
 
   {% if view == 'list' %}
   <div class="content">
+    <!-- New Note action — index 0, always first -->
+    <div class="list-row new-action {{ 'selected' if selected == 0 else '' }}">
+      {% if selected == 0 %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+      <span style="font-size:18px; margin-right:8px">+</span>
+      <span>New Note &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
+    </div>
+
     {% for note in notes %}
-    <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}">
-      {% if loop.index0 == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+    <div class="list-row {{ 'selected' if loop.index == selected else '' }}">
+      {% if loop.index == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
       <span style="flex:1; font-weight:bold">{{ note.title }}</span>
       <span class="meta">{{ note.created[:10] if note.created else '' }}</span>
     </div>
     {% endfor %}
-
-    <!-- New Note action -->
-    <div class="list-row new-action {{ 'selected' if selected == notes|length else '' }}">
-      {% if selected == notes|length %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
-      <span style="font-size:18px; margin-right:8px">+</span>
-      <span>New Note &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
-    </div>
   </div>
   <div class="status-bar">
     <span class="status-panel">{{ notes|length }} note{{ 's' if notes|length != 1 else '' }}</span>

@@ -16,20 +16,20 @@
   <div class="menu-bar"><span>File</span><span>Edit</span></div>
 
   <div class="content">
+    <!-- New Task action — index 0, always first -->
+    <div class="todo-row new-action {{ 'selected' if selected == 0 else '' }}">
+      {% if selected == 0 %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+      <div class="checkbox" style="font-size:16px; font-weight:bold">+</div>
+      <span>New Task &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
+    </div>
+
     {% for item in todos %}
-    <div class="todo-row {{ 'selected' if loop.index0 == selected else '' }}">
-      {% if loop.index0 == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+    <div class="todo-row {{ 'selected' if loop.index == selected else '' }}">
+      {% if loop.index == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
       <div class="checkbox">{% if item.done %}&#10003;{% endif %}</div>
       <span class="todo-text {{ 'done' if item.done else '' }}">{{ item.text }}</span>
     </div>
     {% endfor %}
-
-    <!-- New Task action -->
-    <div class="todo-row new-action {{ 'selected' if selected == todos|length else '' }}">
-      {% if selected == todos|length %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
-      <div class="checkbox" style="font-size:16px; font-weight:bold">+</div>
-      <span>New Task &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
-    </div>
   </div>
 
   <div class="status-bar">

@@ -101,13 +101,17 @@ class AppState:
         # ── webapp browser commands ────────────────────────────────
         self.browser_cmd = None  # dict set by input_handler, consumed by render
 
+        # ── home screen memory ────────────────────────────────────
+        self.home_selected = 0  # restored when returning to home
+
     def mark_dirty(self):
         self.dirty.set()
 
     def go(self, screen, **kwargs):
         with self._lock:
-            self.screen   = screen
-            self.selected = 0
+            self.screen = screen
+            # Restore home position; reset to 0 for every other screen
+            self.selected = self.home_selected if screen == 'home' else 0
             for k, v in kwargs.items():
                 setattr(self, k, v)
         self.dirty.set()
