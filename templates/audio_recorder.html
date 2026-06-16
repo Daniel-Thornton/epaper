@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <span class="title">&#9836; Voice Notes</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar"><span>File</span><span>Record</span></div>
+
+  <!-- Recording status panel -->
+  <div class="rec-status-panel {{ 'rec-active' if recording else '' }}">
+    {% if recording %}
+      {% set m = elapsed // 60 %}
+      {% set s = elapsed % 60 %}
+      <div class="rec-dot-big">&#11044;</div>
+      <div>
+        <div class="rec-timer">{{ '%02d' % m }}:{{ '%02d' % s }}</div>
+        <div class="rec-hint">Hold GPIO 6 or press ACCEPT to stop</div>
+      </div>
+    {% else %}
+      <div class="rec-dot-idle">&#9675;</div>
+      <div>
+        <div class="rec-ready">Ready to record</div>
+        <div class="rec-hint">Hold GPIO 6 or press ACCEPT to start</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Recordings list -->
+  <div class="content">
+    {% if recordings %}
+      {% for rec in recordings %}
+      <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}">
+        <span style="flex:1; font-family:'Courier New',monospace; font-size:11px">{{ rec.name }}</span>
+        <span class="meta">{{ rec.duration }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="list-row" style="color:#808080; font-size:12px">
+        No recordings yet. Press ACCEPT or hold GPIO 6 to record.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="status-bar">
+    <span class="status-panel">{{ recordings|length }} recording{{ 's' if recordings|length != 1 else '' }}</span>
+    <span class="status-panel">ACCEPT rec/stop &nbsp; GPIO 6 hold &nbsp; BACK home</span>
+  </div>
+</div>
+</body>
+</html>

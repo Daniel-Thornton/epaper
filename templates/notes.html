@@ -18,20 +18,22 @@
 
   {% if view == 'list' %}
   <div class="content">
-    {% if notes %}
-      {% for note in notes %}
-      <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}">
-        <span style="flex:1; font-weight:bold">{{ note.title }}</span>
-        <span class="meta">{{ note.created[:10] if note.created else '' }}</span>
-      </div>
-      {% endfor %}
-    {% else %}
-      <div class="list-row" style="color:#808080">No notes yet. Edit data/notes.json to add notes.</div>
-    {% endif %}
+    {% for note in notes %}
+    <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}">
+      <span style="flex:1; font-weight:bold">{{ note.title }}</span>
+      <span class="meta">{{ note.created[:10] if note.created else '' }}</span>
+    </div>
+    {% endfor %}
+
+    <!-- New Note action -->
+    <div class="list-row new-action {{ 'selected' if selected == notes|length else '' }}">
+      <span style="font-size:18px; margin-right:8px">+</span>
+      <span>New Note &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
+    </div>
   </div>
   <div class="status-bar">
     <span class="status-panel">{{ notes|length }} note{{ 's' if notes|length != 1 else '' }}</span>
-    <span class="status-panel">UP/DOWN select &nbsp; SELECT open &nbsp; BACK home</span>
+    <span class="status-panel">SELECT open/new &nbsp; BACK home</span>
   </div>
 
   {% else %}

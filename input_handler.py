@@ -1,30 +1,40 @@
 import json
 import os
+import threading
 import time
+import wave
+from datetime import datetime
 from pathlib import Path
 
-# Pi 5 / Bookworm: only lgpio backend works
 os.environ.setdefault('GPIOZERO_PIN_FACTORY', 'lgpio')
-
 try:
     from gpiozero import Button
     GPIO_AVAILABLE = True
 except Exception:
     GPIO_AVAILABLE = False
 
-from state import state, APPS, CALC_FLAT
+import voice
+from state import state, APPS, CALC_FLAT, SYMBOL_FLAT
 
-DATA_DIR = Path(__file__).parent / 'data'
+DATA_DIR  = Path(__file__).parent / 'data'
+REC_DIR   = DATA_DIR / 'recordings'
 
-PIN_UP     = 20
-PIN_DOWN   = 13
-PIN_LEFT   = 16
-PIN_RIGHT  = 21
-PIN_BACK   = 26
-PIN_ACCEPT = 19
+# ── GPIO pins ─────────────────────────────────────────────────────────────────
+PIN_UP      = 20
+PIN_DOWN    = 13
+PIN_LEFT    = 16
+PIN_RIGHT   = 21
+PIN_BACK    = 26
+PIN_ACCEPT  = 19
+PIN_REFRESH = 5
+PIN_MIC     = 6
+
+COLS_HOME = 3
+COLS_SYM  = 6
+ROWS_SYM  = 6
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+# ── data helpers ──────────────────────────────────────────────────────────────
 
 def _load(fname, default):
     p = DATA_DIR / fname
@@ -40,18 +50,29 @@ def _save(fname, data):
         json.dump(data, f, indent=2)
 
 
-# ── per-screen handlers ───────────────────────────────────────────────────────
+def _list_recs():
+    REC_DIR.mkdir(parents=True, exist_ok=True)
+    recs = []
+    for p in sorted(REC_DIR.glob('*.wav'), reverse=True):
+        try:
+            with wave.open(str(p), 'rb') as wf:
+                dur = wf.getnframes() / wf.getframerate()
+        except Exception:
+            dur = 0
+        recs.append({'name': p.stem, 'path': str(p), 'duration': dur})
+    return recs
 
-COLS = 3  # home grid columns
+
+# ── screen handlers ───────────────────────────────────────────────────────────
 
 def _home(btn):
     s = state
     n = len(APPS)
     if btn == 'UP':
-        s.selected = (s.selected - COLS) % n
+        s.selected = (s.selected - COLS_HOME) % n
         s.mark_dirty()
     elif btn == 'DOWN':
-        s.selected = (s.selected + COLS) % n
+        s.selected = (s.selected + COLS_HOME) % n
         s.mark_dirty()
     elif btn == 'LEFT':
         s.selected = (s.selected - 1) % n
@@ -66,16 +87,26 @@ def _home(btn):
 def _notes(btn):
     s = state
     notes = _load('notes.json', [])
+    n = len(notes)
+
     if s.notes_view == 'list':
         if btn in ('UP', 'LEFT'):
             s.notes_idx = max(0, s.notes_idx - 1)
             s.mark_dirty()
         elif btn in ('DOWN', 'RIGHT'):
-            s.notes_idx = min(len(notes) - 1, max(0, s.notes_idx + 1))
+            s.notes_idx = min(n, s.notes_idx + 1)   # n = "+ New Note" item
             s.mark_dirty()
-        elif btn == 'ACCEPT' and notes:
-            s.notes_view = 'view'
-            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            if s.notes_idx < n:
+                s.notes_view = 'view'
+                s.mark_dirty()
+            else:
+                s.go('text_input',
+                     ti_prompt='New Note — speak or type',
+                     ti_purpose='add_note',
+                     ti_return='notes',
+                     ti_value='',
+                     ti_kb_cursor=0)
         elif btn == 'BACK':
             s.go('home')
     else:
@@ -87,32 +118,41 @@ def _notes(btn):
 def _todo(btn):
     s = state
     todos = _load('todos.json', [])
+    n = len(todos)
+
     if btn in ('UP', 'LEFT'):
         s.todo_idx = max(0, s.todo_idx - 1)
         s.mark_dirty()
     elif btn in ('DOWN', 'RIGHT'):
-        s.todo_idx = min(len(todos) - 1, max(0, s.todo_idx + 1))
+        s.todo_idx = min(n, s.todo_idx + 1)         # n = "+ New Task" item
         s.mark_dirty()
-    elif btn == 'ACCEPT' and todos:
-        todos[s.todo_idx]['done'] = not todos[s.todo_idx]['done']
-        _save('todos.json', todos)
-        s.mark_dirty()
+    elif btn == 'ACCEPT':
+        if s.todo_idx < n:
+            todos[s.todo_idx]['done'] = not todos[s.todo_idx]['done']
+            _save('todos.json', todos)
+            s.mark_dirty()
+        else:
+            s.go('text_input',
+                 ti_prompt='New Task — speak or type',
+                 ti_purpose='add_todo',
+                 ti_return='todo',
+                 ti_value='',
+                 ti_kb_cursor=0)
     elif btn == 'BACK':
         s.go('home')
 
 
 def _clock(btn):
     s = state
-    if btn in ('LEFT',):
+    if btn == 'LEFT':
         s.clock_tab = (s.clock_tab - 1) % 3
         s.mark_dirty()
-    elif btn in ('RIGHT',):
+    elif btn == 'RIGHT':
         s.clock_tab = (s.clock_tab + 1) % 3
         s.mark_dirty()
     elif btn == 'ACCEPT' and s.clock_tab == 1:
-        import time as _t
         if s.timer_end is None:
-            s.timer_end = _t.monotonic() + s.timer_total
+            s.timer_end = time.monotonic() + s.timer_total
         else:
             s.timer_end = None
         s.mark_dirty()
@@ -122,7 +162,7 @@ def _clock(btn):
 
 def _calc(btn):
     s = state
-    n = len(CALC_FLAT)
+    n    = len(CALC_FLAT)
     cols = 4
     if btn == 'UP':
         s.calc_cursor = (s.calc_cursor - cols) % n
@@ -137,47 +177,44 @@ def _calc(btn):
         s.calc_cursor = (s.calc_cursor + 1) % n
         s.mark_dirty()
     elif btn == 'ACCEPT':
-        _press(CALC_FLAT[s.calc_cursor])
+        _press_calc(CALC_FLAT[s.calc_cursor])
     elif btn == 'BACK':
         if s.calc_expr:
-            s.calc_expr = s.calc_expr[:-1]
+            s.calc_expr    = s.calc_expr[:-1]
             s.calc_display = s.calc_expr or '0'
             s.mark_dirty()
         else:
             s.go('home')
 
 
-def _press(key):
+def _press_calc(key):
     s = state
     if key == 'C':
-        s.calc_expr = ''
-        s.calc_display = '0'
+        s.calc_expr = ''; s.calc_display = '0'
     elif key == '⌫':
-        s.calc_expr = s.calc_expr[:-1]
+        s.calc_expr    = s.calc_expr[:-1]
         s.calc_display = s.calc_expr or '0'
     elif key == '=':
         try:
-            expr = s.calc_expr.replace('×', '*').replace('÷', '/')
-            result = eval(expr)  # local device, acceptable
-            # Format: remove trailing .0 for clean integers
+            expr   = s.calc_expr.replace('×', '*').replace('÷', '/')
+            result = eval(expr)
             if isinstance(result, float) and result == int(result):
                 result = int(result)
             s.calc_display = str(result)
-            s.calc_expr = str(result)
+            s.calc_expr    = str(result)
         except Exception:
-            s.calc_display = 'Error'
-            s.calc_expr = ''
+            s.calc_display = 'Error'; s.calc_expr = ''
     elif key == '±':
         try:
             val = eval(s.calc_expr or '0') * -1
-            s.calc_expr = str(val)
+            s.calc_expr = str(int(val) if float(val) == int(val) else val)
             s.calc_display = s.calc_expr
         except Exception:
             pass
     elif key == '%':
         try:
             val = eval(s.calc_expr or '0') / 100
-            s.calc_expr = str(val)
+            s.calc_expr    = str(val)
             s.calc_display = s.calc_expr
         except Exception:
             pass
@@ -192,47 +229,201 @@ def _press(key):
 
 def _settings(btn):
     s = state
-    n = 4
     if btn in ('UP', 'LEFT'):
         s.settings_idx = max(0, s.settings_idx - 1)
         s.mark_dirty()
     elif btn in ('DOWN', 'RIGHT'):
-        s.settings_idx = min(n - 1, s.settings_idx + 1)
+        s.settings_idx = min(3, s.settings_idx + 1)
         s.mark_dirty()
     elif btn == 'BACK':
         s.go('home')
 
 
 def _camera(btn):
-    s = state
-    if btn == 'SELECT':
-        _capture()
+    if btn == 'ACCEPT':
+        _capture_photo()
     elif btn == 'BACK':
-        s.go('home')
+        state.go('home')
 
 
-def _capture():
+def _capture_photo():
     try:
         from picamera2 import Picamera2
         cam = Picamera2()
         cam.configure(cam.create_still_configuration())
         cam.start()
         time.sleep(1.5)
-        save_path = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
-        cam.capture_file(save_path)
+        path = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
+        cam.capture_file(path)
         cam.stop()
         cam.close()
-        print(f'[camera] captured to {save_path}')
+        print(f'[camera] captured {path}')
     except Exception as e:
         print(f'[camera] error: {e}')
     state.mark_dirty()
 
 
-# ── public dispatch ───────────────────────────────────────────────────────────
+# ── text input screen ─────────────────────────────────────────────────────────
+
+def _text_input(btn):
+    s    = state
+    cols = COLS_SYM
+    rows = ROWS_SYM
+    row  = s.ti_kb_cursor // cols
+    col  = s.ti_kb_cursor  % cols
+
+    if btn == 'UP':
+        row = (row - 1) % rows
+        s.ti_kb_cursor = row * cols + col
+        s.mark_dirty()
+    elif btn == 'DOWN':
+        row = (row + 1) % rows
+        s.ti_kb_cursor = row * cols + col
+        s.mark_dirty()
+    elif btn == 'LEFT':
+        col = (col - 1) % cols
+        s.ti_kb_cursor = row * cols + col
+        s.mark_dirty()
+    elif btn == 'RIGHT':
+        col = (col + 1) % cols
+        s.ti_kb_cursor = row * cols + col
+        s.mark_dirty()
+    elif btn == 'ACCEPT':
+        _type_symbol(SYMBOL_FLAT[s.ti_kb_cursor])
+    elif btn == 'BACK':
+        if s.ti_value:
+            s.ti_value = s.ti_value[:-1]
+            s.mark_dirty()
+        else:
+            _cancel_ti()
+
+
+def _type_symbol(key):
+    s = state
+    if key == '':
+        return
+    if key == '⎵':
+        s.ti_value += ' '
+    elif key == '⌫':
+        s.ti_value = s.ti_value[:-1]
+    elif key == '↵':
+        s.ti_value += '\n'
+    elif key == '✓':
+        _confirm_ti()
+        return
+    elif key == '✗':
+        _cancel_ti()
+        return
+    else:
+        s.ti_value += key
+    s.mark_dirty()
+
+
+def _confirm_ti():
+    s    = state
+    text = s.ti_value.strip()
+
+    if s.ti_purpose == 'add_note' and text:
+        notes  = _load('notes.json', [])
+        lines  = text.split('\n', 1)
+        title  = lines[0][:80]
+        body   = lines[1].strip() if len(lines) > 1 else text
+        new_id = max((n['id'] for n in notes), default=0) + 1
+        notes.append({
+            'id':      new_id,
+            'title':   title,
+            'content': body,
+            'created': datetime.now().isoformat()[:19],
+        })
+        _save('notes.json', notes)
+
+    elif s.ti_purpose == 'add_todo' and text:
+        todos  = _load('todos.json', [])
+        new_id = max((t['id'] for t in todos), default=0) + 1
+        todos.append({'id': new_id, 'text': text, 'done': False})
+        _save('todos.json', todos)
+
+    s.go(s.ti_return)
+
+
+def _cancel_ti():
+    state.go(state.ti_return)
+
+
+# ── external keyboard → text input ───────────────────────────────────────────
+
+def handle_external_key(char: str):
+    """Called from keyboard_ext for every USB keystroke."""
+    s = state
+    if s.screen == 'text_input':
+        if char == '⌫':
+            if s.ti_value:
+                s.ti_value = s.ti_value[:-1]
+                s.mark_dirty()
+        elif char in ('↵', '\r'):
+            _confirm_ti()
+        elif char == '\x1b':
+            _cancel_ti()
+        elif char == '\t':
+            s.ti_value += '    '
+            s.mark_dirty()
+        else:
+            s.ti_value += char
+            s.mark_dirty()
+    else:
+        # Navigation keys work everywhere else
+        NAV = {'w': 'UP', 's': 'DOWN', 'a': 'LEFT', 'd': 'RIGHT',
+               '\x1b': 'BACK', '\r': 'ACCEPT'}
+        btn = NAV.get(char.lower())
+        if btn:
+            handle(btn)
+
+
+# ── audio recorder ────────────────────────────────────────────────────────────
+
+def _audio_recorder(btn):
+    s    = state
+    recs = _list_recs()
+    n    = len(recs)
+
+    if btn in ('UP', 'LEFT'):
+        s.audio_rec_idx = max(0, s.audio_rec_idx - 1)
+        s.mark_dirty()
+    elif btn in ('DOWN', 'RIGHT'):
+        s.audio_rec_idx = min(max(0, n - 1), s.audio_rec_idx + 1)
+        s.mark_dirty()
+    elif btn == 'ACCEPT':
+        if not s.audio_recording:
+            if voice.start_recording():
+                s.audio_recording = True
+                s.audio_rec_start = time.monotonic()
+                s.mark_dirty()
+        else:
+            _stop_and_save_rec()
+    elif btn == 'BACK':
+        if s.audio_recording:
+            _stop_and_save_rec()
+        else:
+            s.go('home')
+
+
+def _stop_and_save_rec():
+    s     = state
+    fname = f"rec_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.wav"
+    path  = str(REC_DIR / fname)
+    voice.stop_and_save(path)
+    s.audio_recording = False
+    s.audio_rec_start = None
+    s.audio_rec_idx   = 0
+    s.mark_dirty()
+
 
 def _back_only(btn):
     if btn == 'BACK':
         state.go('home')
+
+
+# ── main dispatch ─────────────────────────────────────────────────────────────
 
 _HANDLERS = {
     'home':              _home,
@@ -242,6 +433,8 @@ _HANDLERS = {
     'calculator':        _calc,
     'settings':          _settings,
     'camera':            _camera,
+    'text_input':        _text_input,
+    'audio_recorder':    _audio_recorder,
     'webapp_chat':       _back_only,
     'webapp_calories':   _back_only,
     'info':              _back_only,
@@ -254,16 +447,54 @@ def handle(btn: str):
         h(btn)
 
 
+# ── GPIO 6: mic button (push-to-hold) ────────────────────────────────────────
+
+def _on_mic_press():
+    s = state
+    if s.screen == 'text_input':
+        if voice.start_recording():
+            s.recording_voice = True
+            s.mark_dirty()
+    elif s.screen == 'audio_recorder' and not s.audio_recording:
+        if voice.start_recording():
+            s.audio_recording = True
+            s.audio_rec_start = time.monotonic()
+            s.mark_dirty()
+
+
+def _on_mic_release():
+    s = state
+    if s.screen == 'text_input' and s.recording_voice:
+        s.recording_voice = False
+        s.transcribing    = True
+        s.mark_dirty()
+        threading.Thread(target=_transcribe_bg, daemon=True, name='transcribe').start()
+    elif s.screen == 'audio_recorder' and s.audio_recording:
+        _stop_and_save_rec()
+
+
+def _transcribe_bg():
+    text = voice.stop_and_transcribe()
+    s    = state
+    s.transcribing = False
+    if text and s.screen == 'text_input':
+        if s.ti_value and not s.ti_value.endswith(' '):
+            s.ti_value += ' '
+        s.ti_value += text
+    s.mark_dirty()
+
+
+# ── GPIO setup ────────────────────────────────────────────────────────────────
+
 def start():
-    """Wire up GPIO buttons. Returns button objects (keep alive)."""
     if not GPIO_AVAILABLE:
-        print('[input] GPIO not available — use keyboard fallback (--keyboard flag)')
+        print('[input] GPIO not available — use --keyboard flag')
         return ()
 
     def cb(name):
         return lambda: handle(name)
 
-    btns = (
+    nav_btns = (
         Button(PIN_UP,     pull_up=True, bounce_time=0.08),
         Button(PIN_DOWN,   pull_up=True, bounce_time=0.08),
         Button(PIN_LEFT,   pull_up=True, bounce_time=0.08),
@@ -271,11 +502,24 @@ def start():
         Button(PIN_BACK,   pull_up=True, bounce_time=0.08),
         Button(PIN_ACCEPT, pull_up=True, bounce_time=0.08),
     )
-    btns[0].when_pressed = cb('UP')
-    btns[1].when_pressed = cb('DOWN')
-    btns[2].when_pressed = cb('LEFT')
-    btns[3].when_pressed = cb('RIGHT')
-    btns[4].when_pressed = cb('BACK')
-    btns[5].when_pressed = cb('ACCEPT')
-    print('[input] 6 GPIO buttons registered')
-    return btns
+    nav_btns[0].when_pressed = cb('UP')
+    nav_btns[1].when_pressed = cb('DOWN')
+    nav_btns[2].when_pressed = cb('LEFT')
+    nav_btns[3].when_pressed = cb('RIGHT')
+    nav_btns[4].when_pressed = cb('BACK')
+    nav_btns[5].when_pressed = cb('ACCEPT')
+
+    refresh_btn = Button(PIN_REFRESH, pull_up=True, bounce_time=0.05)
+    refresh_btn.when_pressed = lambda: _set_full_refresh()
+
+    mic_btn = Button(PIN_MIC, pull_up=True, bounce_time=0.05)
+    mic_btn.when_pressed  = _on_mic_press
+    mic_btn.when_released = _on_mic_release
+
+    print('[input] 8 GPIO buttons registered (6 nav + refresh + mic)')
+    return nav_btns + (refresh_btn, mic_btn)
+
+
+def _set_full_refresh():
+    state.force_full_refresh = True
+    state.mark_dirty()

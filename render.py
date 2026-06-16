@@ -27,7 +27,7 @@ class Renderer:
         self._page    = self._browser.new_page(viewport={'width': 480, 'height': 800})
         print('[render] Chromium launched')
 
-    def screenshot(self, path: str):
+    def screenshot(self, path: str) -> bool:
         if not PLAYWRIGHT_AVAILABLE:
             return False
         if self._page is None:
@@ -51,8 +51,9 @@ class Renderer:
 
 
 def _to_1bit(path: str) -> Image.Image:
-    img = Image.open(path).convert('L')
-    return img.convert('1', dither=Image.Dither.FLOYDSTEINBERG)
+    return Image.open(path).convert('L').convert(
+        '1', dither=Image.Dither.FLOYDSTEINBERG
+    )
 
 
 def run_loop(display: Display):
@@ -60,14 +61,18 @@ def run_loop(display: Display):
     state.mark_dirty()  # trigger initial render
 
     while True:
-        # Wake on input or every 60 s (keeps clock screen up to date)
+        # Re-render on input OR every 60 s (keeps clock up to date)
         state.dirty.wait(timeout=60)
         state.dirty.clear()
-        time.sleep(0.15)  # debounce: let state settle after rapid inputs
+        time.sleep(0.15)   # debounce: let state settle after rapid inputs
+
+        force = state.force_full_refresh
+        if force:
+            state.force_full_refresh = False
 
         if renderer.screenshot(FRAME_PATH):
             try:
                 img = _to_1bit(FRAME_PATH)
-                display.show(img)
+                display.show(img, force_full=force)
             except Exception as e:
                 print(f'[render] display error: {e}')

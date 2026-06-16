@@ -12,28 +12,26 @@
     <div class="win-btn">&#9744;</div>
     <div class="win-btn">&#10005;</div>
   </div>
-  <div class="menu-bar">
-    <span>File</span><span>Edit</span>
-  </div>
+  <div class="menu-bar"><span>File</span><span>Edit</span></div>
 
   <div class="content">
-    {% if todos %}
-      {% for item in todos %}
-      <div class="todo-row {{ 'selected' if loop.index0 == selected else '' }}">
-        <div class="checkbox">{% if item.done %}&#10003;{% endif %}</div>
-        <span class="todo-text {{ 'done' if item.done else '' }}">{{ item.text }}</span>
-      </div>
-      {% endfor %}
-    {% else %}
-      <div class="todo-row" style="color:#808080">
-        No items. Edit data/todos.json to add tasks.
-      </div>
-    {% endif %}
+    {% for item in todos %}
+    <div class="todo-row {{ 'selected' if loop.index0 == selected else '' }}">
+      <div class="checkbox">{% if item.done %}&#10003;{% endif %}</div>
+      <span class="todo-text {{ 'done' if item.done else '' }}">{{ item.text }}</span>
+    </div>
+    {% endfor %}
+
+    <!-- New Task action -->
+    <div class="todo-row new-action {{ 'selected' if selected == todos|length else '' }}">
+      <div class="checkbox" style="font-size:16px; font-weight:bold">+</div>
+      <span>New Task &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
+    </div>
   </div>
 
   <div class="status-bar">
     <span class="status-panel">{{ done }} / {{ todos|length }} done</span>
-    <span class="status-panel">SELECT toggle &nbsp; BACK home</span>
+    <span class="status-panel">ACCEPT toggle/new &nbsp; BACK home</span>
   </div>
 </div>
 </body>

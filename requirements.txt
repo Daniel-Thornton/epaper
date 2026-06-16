@@ -1,12 +1,25 @@
-# Install via pip:
+# Install via pip (inside venv):
 flask>=3.0.0
 pillow>=10.0.0
 psutil>=5.9.0
 playwright>=1.40.0
-qrcode[pil]>=7.4.0
+"qrcode[pil]">=7.4.0
+sounddevice>=0.4.6
+numpy>=1.24.0
+faster-whisper>=1.0.0      # recommended: faster than openai-whisper on Pi
+# openai-whisper>=20240930  # alternative if faster-whisper fails
+evdev>=1.6.0               # USB keyboard input
 
-# Install via apt on Pi OS Bookworm (NOT pip):
-#   sudo apt install python3-picamera2 python3-lgpio python3-gpiozero
+# Install via apt on Pi OS Bookworm (NOT pip — these are system packages):
+#   sudo apt install python3-lgpio python3-gpiozero python3-picamera2
+#   sudo apt install ffmpeg                # required by whisper for audio decode
+#   sudo apt install python3-sounddevice  # OR use pip sounddevice above
 #
-# After pip install playwright, run:
+# USB keyboard permissions:
+#   sudo usermod -aG input $USER          # then log out and back in
+#
+# After pip install playwright:
 #   playwright install chromium
+#
+# First run (downloads ~150MB Whisper tiny model):
+#   python -c "from faster_whisper import WhisperModel; WhisperModel('tiny', device='cpu')"
