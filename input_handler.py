@@ -13,6 +13,7 @@ try:
 except Exception:
     GPIO_AVAILABLE = False
 
+import camera
 import voice
 from state import state, APPS, CALC_FLAT, SYMBOL_FLAT
 
@@ -81,7 +82,10 @@ def _home(btn):
         s.selected = (s.selected + 1) % n
         s.mark_dirty()
     elif btn == 'ACCEPT':
-        s.go(APPS[s.selected][1])
+        dest = APPS[s.selected][1]
+        if dest == 'camera':
+            camera.start(on_frame=state.mark_dirty)
+        s.go(dest)
 
 
 def _notes(btn):
@@ -241,26 +245,11 @@ def _settings(btn):
 
 def _camera(btn):
     if btn == 'ACCEPT':
-        _capture_photo()
+        camera.capture_still()
+        state.mark_dirty()
     elif btn == 'BACK':
+        camera.stop()
         state.go('home')
-
-
-def _capture_photo():
-    try:
-        from picamera2 import Picamera2
-        cam = Picamera2()
-        cam.configure(cam.create_still_configuration())
-        cam.start()
-        time.sleep(1.5)
-        path = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
-        cam.capture_file(path)
-        cam.stop()
-        cam.close()
-        print(f'[camera] captured {path}')
-    except Exception as e:
-        print(f'[camera] error: {e}')
-    state.mark_dirty()
 
 
 # ── text input screen ─────────────────────────────────────────────────────────

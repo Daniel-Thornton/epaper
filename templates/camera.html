@@ -17,23 +17,30 @@
 
   <div class="content">
     <div class="camera-frame">
-      {% if has_photo %}
-        <img src="/static/last_photo.jpg?t={{ range(999999)|random }}" alt="Last photo">
+      {% if preview_exists %}
+        <img src="/static/camera_preview.jpg?t={{ ts }}" class="camera-preview-img" alt="Live preview">
+        <div class="camera-label">&#11044; LIVE &mdash; SELECT to capture</div>
+      {% elif has_photo %}
+        <img src="/static/last_photo.jpg?t={{ ts }}" class="camera-preview-img" alt="Last photo">
+        <div class="camera-label">Last capture &mdash; SELECT to capture again</div>
       {% else %}
         <div class="no-photo-msg">
           <div class="no-photo-icon">&#9685;</div>
-          <div>No photo taken yet</div>
-          <div style="font-size:12px; margin-top:8px">Press SELECT to capture</div>
+          <div>Starting camera&hellip;</div>
+          <div style="font-size:22px; margin-top:12px; color:#606060">Preview will appear shortly</div>
         </div>
       {% endif %}
     </div>
   </div>
 
   <div class="status-bar">
+    <span class="status-panel">
+      {%- if preview_exists -%}LIVE
+      {%- elif has_photo -%}STILL
+      {%- else -%}INIT
+      {%- endif -%}
+    </span>
     <span class="status-panel">SELECT capture &nbsp; BACK home</span>
-    {% if has_photo %}
-    <span class="status-panel">static/last_photo.jpg</span>
-    {% endif %}
   </div>
 </div>
 </body>

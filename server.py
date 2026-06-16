@@ -113,8 +113,14 @@ def index():
         return render_template('info.html', info=_pi_info())
 
     if sc == 'camera':
-        has_photo = (Path(__file__).parent / 'static' / 'last_photo.jpg').exists()
-        return render_template('camera.html', has_photo=has_photo)
+        static_dir     = Path(__file__).parent / 'static'
+        preview_exists = (static_dir / 'camera_preview.jpg').exists()
+        has_photo      = (static_dir / 'last_photo.jpg').exists()
+        ts             = int(time.time())
+        return render_template('camera.html',
+                               preview_exists=preview_exists,
+                               has_photo=has_photo,
+                               ts=ts)
 
     if sc == 'text_input':
         return render_template('text_input.html',
