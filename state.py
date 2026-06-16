@@ -15,6 +15,19 @@ APPS = [
 
 APP_ICONS = ['✎', '✔', '◉', '◷', '#', '⚙', 'π', '♪', '✉', '⊕']
 
+APP_ICON_FILES = [
+    'notes.png',
+    'todo.png',
+    'camera.png',
+    'clock.png',
+    'calculator.png',
+    'settings.png',
+    'info.png',
+    'voice.png',
+    'chat.png',
+    'calories.png',
+]
+
 CALC_BUTTONS = [
     ['C',  '±', '%', '÷'],
     ['7',  '8', '9', '×'],

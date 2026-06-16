@@ -12,7 +12,7 @@ import psutil
 import qrcode
 from flask import Flask, render_template
 
-from state import state, APPS, APP_ICONS, CALC_BUTTONS, SYMBOL_KB
+from state import state, APPS, APP_ICONS, APP_ICON_FILES, CALC_BUTTONS, SYMBOL_KB
 
 app      = Flask(__name__)
 DATA_DIR = Path(__file__).parent / 'data'
@@ -65,6 +65,7 @@ def index():
 
     if sc == 'home':
         return render_template('home.html', apps=APPS, icons=APP_ICONS,
+                               icon_files=APP_ICON_FILES,
                                selected=s.selected,
                                clock=datetime.now().strftime('%H:%M'))
 
@@ -137,12 +138,14 @@ def index():
     if sc == 'webapp_chat':
         url = 'https://daniel-thornton.github.io/chat/'
         return render_template('webapp.html', title='Chat App', url=url,
-                               qr=_qr_b64(url), desc='AI chat interface')
+                               qr=_qr_b64(url), desc='AI chat interface',
+                               icon='chat')
 
     if sc == 'webapp_calories':
         url = 'https://daniel-thornton.github.io/calorie-logger/'
         return render_template('webapp.html', title='Calorie Logger', url=url,
-                               qr=_qr_b64(url), desc='Track daily calories')
+                               qr=_qr_b64(url), desc='Track daily calories',
+                               icon='calories')
 
     return render_template('home.html', apps=APPS, icons=APP_ICONS,
                            selected=0, clock=datetime.now().strftime('%H:%M'))

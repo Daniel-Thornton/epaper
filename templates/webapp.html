@@ -7,7 +7,8 @@
 <body>
 <div class="window">
   <div class="title-bar">
-    <span class="title">&#9741; {{ title }}</span>
+    <img src="/static/icons/{{ icon }}.png" class="title-icon" alt="">
+    <span class="title">{{ title }}</span>
     <div class="win-btn">&#8212;</div>
     <div class="win-btn">&#9744;</div>
     <div class="win-btn">&#10005;</div>
@@ -18,7 +19,7 @@
     <div class="qr-screen">
       <div class="qr-app-name">{{ title }}</div>
       <div class="qr-desc">{{ desc }}</div>
-      <img src="data:image/png;base64,{{ qr }}" alt="QR code for {{ title }}">
+      <img class="qr-code" src="data:image/png;base64,{{ qr }}" alt="QR code for {{ title }}">
       <div style="font-size:12px; color:#404040">Scan to open on your phone</div>
       <div class="qr-url">{{ url }}</div>
     </div>
