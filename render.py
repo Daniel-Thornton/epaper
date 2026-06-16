@@ -1,5 +1,15 @@
+import json
 import time
+from pathlib import Path
 from PIL import Image
+
+def _refresh_rate() -> int:
+    """Read refresh_rate from config.json; fall back to 60 s."""
+    try:
+        cfg = json.loads((Path(__file__).parent / 'data' / 'config.json').read_text())
+        return int(cfg.get('refresh_rate', 60))
+    except Exception:
+        return 60
 
 try:
     from playwright.sync_api import sync_playwright
@@ -33,7 +43,7 @@ class Renderer:
         if self._page is None:
             self._start()
         try:
-            self._page.goto(FLASK_URL, wait_until='networkidle', timeout=8000)
+            self._page.goto(FLASK_URL, wait_until='load', timeout=5000)
             self._page.screenshot(path=path)
             return True
         except Exception as e:
@@ -61,10 +71,10 @@ def run_loop(display: Display):
     state.mark_dirty()  # trigger initial render
 
     while True:
-        # Re-render on input OR every 60 s (keeps clock up to date)
-        state.dirty.wait(timeout=60)
+        # Re-render on input OR after refresh_rate seconds (keeps clock up to date)
+        state.dirty.wait(timeout=_refresh_rate())
         state.dirty.clear()
-        time.sleep(0.15)   # debounce: let state settle after rapid inputs
+        time.sleep(0.05)   # debounce: let state settle after rapid inputs
 
         force = state.force_full_refresh
         if force:
