@@ -21,7 +21,7 @@ WHISPER_BACKEND = None
 
 try:
     from faster_whisper import WhisperModel
-    _model          = WhisperModel('tiny', device='cpu', compute_type='int8')
+    _model          = WhisperModel('tiny', device='cpu', compute_type='float32')
     WHISPER_BACKEND = 'faster'
     print('[voice] faster-whisper tiny/int8 loaded')
 except ImportError:
