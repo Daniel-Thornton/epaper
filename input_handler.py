@@ -412,6 +412,24 @@ def _back_only(btn):
         state.go('home')
 
 
+def _webapp(btn):
+    s = state
+    if btn == 'BACK':
+        s.browser_cmd = None
+        s.go('home')
+        return
+    cmd = {
+        'UP':     {'action': 'scroll', 'x': 0,  'y': -250},
+        'DOWN':   {'action': 'scroll', 'x': 0,  'y':  250},
+        'LEFT':   {'action': 'key', 'key': 'Shift+Tab'},
+        'RIGHT':  {'action': 'key', 'key': 'Tab'},
+        'ACCEPT': {'action': 'key', 'key': 'Enter'},
+    }.get(btn)
+    if cmd:
+        s.browser_cmd = cmd
+        s.mark_dirty()
+
+
 # ── main dispatch ─────────────────────────────────────────────────────────────
 
 _HANDLERS = {
@@ -424,8 +442,8 @@ _HANDLERS = {
     'camera':            _camera,
     'text_input':        _text_input,
     'audio_recorder':    _audio_recorder,
-    'webapp_chat':       _back_only,
-    'webapp_calories':   _back_only,
+    'webapp_chat':       _webapp,
+    'webapp_calories':   _webapp,
     'info':              _back_only,
 }
 

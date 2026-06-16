@@ -32,9 +32,10 @@ WEBAPP_URLS = {
 
 class Renderer:
     def __init__(self):
-        self._pw      = None
-        self._browser = None
-        self._page    = None
+        self._pw             = None
+        self._browser        = None
+        self._page           = None
+        self._loaded_screen  = None   # last webapp screen navigated to
 
     def _start(self):
         self._pw      = sync_playwright().start()
@@ -47,16 +48,45 @@ class Renderer:
             return False
         if self._page is None:
             self._start()
-        screen  = state.screen
-        url     = WEBAPP_URLS.get(screen, FLASK_URL)
-        timeout = 15000 if screen in WEBAPP_URLS else 5000
+
+        screen = state.screen
+
         try:
-            self._page.goto(url, wait_until='networkidle', timeout=timeout)
+            if screen in WEBAPP_URLS:
+                # Consume any pending browser command
+                cmd = state.browser_cmd
+                state.browser_cmd = None
+
+                if self._loaded_screen != screen:
+                    # First visit — navigate to the site
+                    self._page.goto(WEBAPP_URLS[screen],
+                                    wait_until='networkidle', timeout=15000)
+                    self._loaded_screen = screen
+                elif cmd:
+                    # Execute navigation/scroll command in-page
+                    self._exec_cmd(cmd)
+                # else: page already loaded, just screenshot current state
+            else:
+                self._page.goto(FLASK_URL, wait_until='load', timeout=1000)
+                self._loaded_screen = None
+
             self._page.screenshot(path=path)
             return True
         except Exception as e:
             print(f'[render] screenshot error: {e}')
             return False
+
+    def _exec_cmd(self, cmd: dict):
+        try:
+            action = cmd.get('action')
+            if action == 'scroll':
+                x, y = cmd.get('x', 0), cmd.get('y', 0)
+                self._page.evaluate(f'window.scrollBy({x}, {y})')
+            elif action == 'key':
+                self._page.keyboard.press(cmd['key'])
+            time.sleep(0.01)   # let the page react before screenshotting
+        except Exception as e:
+            print(f'[render] exec_cmd error: {e}')
 
     def close(self):
         try:
@@ -82,7 +112,7 @@ def run_loop(display: Display):
         # Re-render on input OR after refresh_rate seconds (keeps clock up to date)
         state.dirty.wait(timeout=_refresh_rate())
         state.dirty.clear()
-        time.sleep(0.05)   # debounce: let state settle after rapid inputs
+        time.sleep(0.01)   # debounce: let state settle after rapid inputs
 
         force = state.force_full_refresh
         if force:

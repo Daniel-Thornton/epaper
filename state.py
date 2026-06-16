@@ -98,6 +98,9 @@ class AppState:
         # ── display ───────────────────────────────────────────────
         self.force_full_refresh = False
 
+        # ── webapp browser commands ────────────────────────────────
+        self.browser_cmd = None  # dict set by input_handler, consumed by render
+
     def mark_dirty(self):
         self.dirty.set()
 
