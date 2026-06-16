@@ -24,6 +24,11 @@ from display import Display
 FRAME_PATH = '/tmp/epaper_frame.png'
 FLASK_URL  = 'http://127.0.0.1:5000/'
 
+WEBAPP_URLS = {
+    'webapp_chat':     'https://daniel-thornton.github.io/chat/',
+    'webapp_calories': 'https://daniel-thornton.github.io/calorie-logger/',
+}
+
 
 class Renderer:
     def __init__(self):
@@ -42,8 +47,11 @@ class Renderer:
             return False
         if self._page is None:
             self._start()
+        screen  = state.screen
+        url     = WEBAPP_URLS.get(screen, FLASK_URL)
+        timeout = 15000 if screen in WEBAPP_URLS else 5000
         try:
-            self._page.goto(FLASK_URL, wait_until='load', timeout=5000)
+            self._page.goto(url, wait_until='networkidle', timeout=timeout)
             self._page.screenshot(path=path)
             return True
         except Exception as e:

@@ -1,11 +1,9 @@
 """
-Persistent Picamera2 wrapper.
+Persistent Picamera2 wrapper for the camera screen.
 
-One instance is kept alive while the camera screen is open.
-Every PREVIEW_INTERVAL seconds it captures a frame to PREVIEW_PATH
-and calls on_frame() so the render loop can redraw.
-
-SELECT → capture_still() saves a full-quality JPEG to STILL_PATH.
+start()  → spawns a daemon thread that inits the camera and loops preview captures
+stop()   → signals the thread to exit and closes the camera
+capture_still() → saves last_photo.jpg from the running camera
 """
 import threading
 import time
@@ -14,6 +12,7 @@ from pathlib import Path
 PREVIEW_PATH     = str(Path(__file__).parent / 'static' / 'camera_preview.jpg')
 STILL_PATH       = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
 PREVIEW_INTERVAL = 0.5   # seconds between preview frames
+WARMUP_S         = 1.5   # let the sensor stabilise before first capture
 
 try:
     from picamera2 import Picamera2
@@ -28,59 +27,42 @@ _lock     = threading.Lock()
 _on_frame = None
 
 
+# ── public API ─────────────────────────────────────────────────────────────────
+
 def start(on_frame=None):
-    """Open the camera and begin periodic preview captures."""
-    global _cam, _running, _on_frame
+    """Start the preview thread (non-blocking)."""
+    global _running, _on_frame
     if _running:
         return
     if not PICAMERA_AVAILABLE:
         print('[camera] picamera2 unavailable — no preview')
         return
-
     _on_frame = on_frame
-    try:
-        _cam = Picamera2()
-        cfg  = _cam.create_preview_configuration(
-            main={'size': (480, 360), 'format': 'RGB888'},
-        )
-        _cam.configure(cfg)
-        _cam.start()
-        time.sleep(0.5)   # sensor warm-up
-        _running = True
-
-        t = threading.Thread(target=_loop, daemon=True, name='cam_preview')
-        t.start()
-        print('[camera] preview started')
-    except Exception as e:
-        print(f'[camera] start error: {e}')
+    _running  = True
+    t = threading.Thread(target=_run, daemon=True, name='cam_preview')
+    t.start()
+    print('[camera] thread started')
 
 
 def stop():
-    """Stop preview and close the camera."""
-    global _cam, _running
+    """Signal the preview thread to exit and release the camera."""
+    global _running
     _running = False
-    with _lock:
-        if _cam is not None:
-            try:
-                _cam.stop()
-                _cam.close()
-            except Exception:
-                pass
-            _cam = None
-    print('[camera] stopped')
+    # _cam is closed by the thread itself once _running becomes False
 
 
 def capture_still() -> bool:
-    """Save a still to STILL_PATH using the running camera."""
+    """Capture a still photo to STILL_PATH using the running camera."""
     with _lock:
         if _cam is None:
+            print('[camera] capture_still: camera not ready')
             return False
         try:
             _cam.capture_file(STILL_PATH)
             print(f'[camera] still saved → {STILL_PATH}')
             return True
         except Exception as e:
-            print(f'[camera] capture error: {e}')
+            print(f'[camera] capture_still error: {e}')
             return False
 
 
@@ -88,7 +70,31 @@ def is_running() -> bool:
     return _running
 
 
-def _loop():
+# ── internal ──────────────────────────────────────────────────────────────────
+
+def _run():
+    """Camera thread: init → warm-up → loop."""
+    global _cam, _running
+
+    try:
+        cam = Picamera2()
+        # Simple configuration — no exotic pixel formats
+        cfg = cam.create_preview_configuration(
+            main={'size': (480, 360)},
+        )
+        cam.configure(cfg)
+        cam.start()
+        print(f'[camera] warming up ({WARMUP_S}s)…')
+        time.sleep(WARMUP_S)
+        with _lock:
+            _cam = cam
+        print('[camera] preview active')
+    except Exception as e:
+        print(f'[camera] init error: {e}')
+        _running = False
+        return
+
+    # Capture loop
     while _running:
         with _lock:
             if _cam is None:
@@ -102,3 +108,14 @@ def _loop():
             _on_frame()
 
         time.sleep(PREVIEW_INTERVAL)
+
+    # Clean up
+    with _lock:
+        if _cam is not None:
+            try:
+                _cam.stop()
+                _cam.close()
+            except Exception:
+                pass
+            _cam = None
+    print('[camera] stopped')
