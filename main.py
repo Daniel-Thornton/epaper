@@ -17,9 +17,11 @@ from state import state
 
 def _keyboard_thread():
     """W=UP  S=DOWN  Q=BACK  E=SELECT  Ctrl+C=quit"""
-    MAP = {'w': 'UP', 's': 'DOWN', 'q': 'BACK', 'e': 'SELECT',
-           'W': 'UP', 'S': 'DOWN', 'Q': 'BACK', 'E': 'SELECT'}
-    print('[keyboard] W=UP S=DOWN Q=BACK E=SELECT')
+    MAP = {'w': 'UP', 's': 'DOWN', 'a': 'LEFT', 'd': 'RIGHT',
+           'q': 'BACK', 'e': 'ACCEPT',
+           'W': 'UP', 'S': 'DOWN', 'A': 'LEFT', 'D': 'RIGHT',
+           'Q': 'BACK', 'E': 'ACCEPT'}
+    print('[keyboard] W=UP S=DOWN A=LEFT D=RIGHT Q=BACK E=ACCEPT')
     try:
         import tty, termios
         fd  = sys.stdin.fileno()

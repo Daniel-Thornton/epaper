@@ -16,10 +16,12 @@ from state import state, APPS, CALC_FLAT
 
 DATA_DIR = Path(__file__).parent / 'data'
 
-PIN_UP     = 21
-PIN_DOWN   = 20
-PIN_BACK   = 16
-PIN_SELECT = 26
+PIN_UP     = 20
+PIN_DOWN   = 13
+PIN_LEFT   = 16
+PIN_RIGHT  = 21
+PIN_BACK   = 26
+PIN_ACCEPT = 19
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -40,16 +42,24 @@ def _save(fname, data):
 
 # ── per-screen handlers ───────────────────────────────────────────────────────
 
+COLS = 3  # home grid columns
+
 def _home(btn):
     s = state
     n = len(APPS)
     if btn == 'UP':
-        s.selected = (s.selected - 1) % n
+        s.selected = (s.selected - COLS) % n
         s.mark_dirty()
     elif btn == 'DOWN':
+        s.selected = (s.selected + COLS) % n
+        s.mark_dirty()
+    elif btn == 'LEFT':
+        s.selected = (s.selected - 1) % n
+        s.mark_dirty()
+    elif btn == 'RIGHT':
         s.selected = (s.selected + 1) % n
         s.mark_dirty()
-    elif btn == 'SELECT':
+    elif btn == 'ACCEPT':
         s.go(APPS[s.selected][1])
 
 
@@ -57,13 +67,13 @@ def _notes(btn):
     s = state
     notes = _load('notes.json', [])
     if s.notes_view == 'list':
-        if btn == 'UP':
+        if btn in ('UP', 'LEFT'):
             s.notes_idx = max(0, s.notes_idx - 1)
             s.mark_dirty()
-        elif btn == 'DOWN':
+        elif btn in ('DOWN', 'RIGHT'):
             s.notes_idx = min(len(notes) - 1, max(0, s.notes_idx + 1))
             s.mark_dirty()
-        elif btn == 'SELECT' and notes:
+        elif btn == 'ACCEPT' and notes:
             s.notes_view = 'view'
             s.mark_dirty()
         elif btn == 'BACK':
@@ -77,13 +87,13 @@ def _notes(btn):
 def _todo(btn):
     s = state
     todos = _load('todos.json', [])
-    if btn == 'UP':
+    if btn in ('UP', 'LEFT'):
         s.todo_idx = max(0, s.todo_idx - 1)
         s.mark_dirty()
-    elif btn == 'DOWN':
+    elif btn in ('DOWN', 'RIGHT'):
         s.todo_idx = min(len(todos) - 1, max(0, s.todo_idx + 1))
         s.mark_dirty()
-    elif btn == 'SELECT' and todos:
+    elif btn == 'ACCEPT' and todos:
         todos[s.todo_idx]['done'] = not todos[s.todo_idx]['done']
         _save('todos.json', todos)
         s.mark_dirty()
@@ -93,14 +103,13 @@ def _todo(btn):
 
 def _clock(btn):
     s = state
-    if btn == 'UP':
+    if btn in ('LEFT',):
         s.clock_tab = (s.clock_tab - 1) % 3
         s.mark_dirty()
-    elif btn == 'DOWN':
+    elif btn in ('RIGHT',):
         s.clock_tab = (s.clock_tab + 1) % 3
         s.mark_dirty()
-    elif btn == 'SELECT' and s.clock_tab == 1:
-        # Toggle timer on/off
+    elif btn == 'ACCEPT' and s.clock_tab == 1:
         import time as _t
         if s.timer_end is None:
             s.timer_end = _t.monotonic() + s.timer_total
@@ -114,13 +123,20 @@ def _clock(btn):
 def _calc(btn):
     s = state
     n = len(CALC_FLAT)
+    cols = 4
     if btn == 'UP':
-        s.calc_cursor = (s.calc_cursor - 4) % n
+        s.calc_cursor = (s.calc_cursor - cols) % n
         s.mark_dirty()
     elif btn == 'DOWN':
-        s.calc_cursor = (s.calc_cursor + 4) % n
+        s.calc_cursor = (s.calc_cursor + cols) % n
         s.mark_dirty()
-    elif btn == 'SELECT':
+    elif btn == 'LEFT':
+        s.calc_cursor = (s.calc_cursor - 1) % n
+        s.mark_dirty()
+    elif btn == 'RIGHT':
+        s.calc_cursor = (s.calc_cursor + 1) % n
+        s.mark_dirty()
+    elif btn == 'ACCEPT':
         _press(CALC_FLAT[s.calc_cursor])
     elif btn == 'BACK':
         if s.calc_expr:
@@ -177,10 +193,10 @@ def _press(key):
 def _settings(btn):
     s = state
     n = 4
-    if btn == 'UP':
+    if btn in ('UP', 'LEFT'):
         s.settings_idx = max(0, s.settings_idx - 1)
         s.mark_dirty()
-    elif btn == 'DOWN':
+    elif btn in ('DOWN', 'RIGHT'):
         s.settings_idx = min(n - 1, s.settings_idx + 1)
         s.mark_dirty()
     elif btn == 'BACK':
@@ -214,6 +230,10 @@ def _capture():
 
 # ── public dispatch ───────────────────────────────────────────────────────────
 
+def _back_only(btn):
+    if btn == 'BACK':
+        state.go('home')
+
 _HANDLERS = {
     'home':              _home,
     'notes':             _notes,
@@ -222,9 +242,9 @@ _HANDLERS = {
     'calculator':        _calc,
     'settings':          _settings,
     'camera':            _camera,
-    'webapp_chat':       lambda b: b == 'BACK' and state.go('home'),
-    'webapp_calories':   lambda b: b == 'BACK' and state.go('home'),
-    'info':              lambda b: b == 'BACK' and state.go('home'),
+    'webapp_chat':       _back_only,
+    'webapp_calories':   _back_only,
+    'info':              _back_only,
 }
 
 
@@ -246,12 +266,16 @@ def start():
     btns = (
         Button(PIN_UP,     pull_up=True, bounce_time=0.08),
         Button(PIN_DOWN,   pull_up=True, bounce_time=0.08),
+        Button(PIN_LEFT,   pull_up=True, bounce_time=0.08),
+        Button(PIN_RIGHT,  pull_up=True, bounce_time=0.08),
         Button(PIN_BACK,   pull_up=True, bounce_time=0.08),
-        Button(PIN_SELECT, pull_up=True, bounce_time=0.08),
+        Button(PIN_ACCEPT, pull_up=True, bounce_time=0.08),
     )
     btns[0].when_pressed = cb('UP')
     btns[1].when_pressed = cb('DOWN')
-    btns[2].when_pressed = cb('BACK')
-    btns[3].when_pressed = cb('SELECT')
-    print('[input] GPIO buttons registered')
+    btns[2].when_pressed = cb('LEFT')
+    btns[3].when_pressed = cb('RIGHT')
+    btns[4].when_pressed = cb('BACK')
+    btns[5].when_pressed = cb('ACCEPT')
+    print('[input] 6 GPIO buttons registered')
     return btns
