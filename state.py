@@ -22,7 +22,7 @@ APP_ICON_FILES = [
     'clock.png',
     'calculator.png',
     'gears-0.png',
-    'INFO.png',
+    'info-i.png',
     'voice.png',
     'chat.png',
     'Dark Agent.png',

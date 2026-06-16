@@ -135,8 +135,8 @@ html, body {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 24px;
-  height: 24px;
+  width: 48px;
+  height: 48px;
   image-rendering: pixelated;
   pointer-events: none;
 }
@@ -144,17 +144,18 @@ html, body {
 /* Hand cursor below selected icon, pointing up at it */
 .icon-cursor {
   position: absolute;
-  bottom: -26px;
+  bottom: -52px;
   left: 50%;
   transform: translateX(-50%);
-  width: 28px;
-  height: 28px;
+  width: 56px;
+  height: 56px;
   image-rendering: pixelated;
   pointer-events: none;
 }
 
 .icon-label {
   font-size: 20px;
+  font-weight: bold;
   text-align: center;
   color: #fff;
   padding: 2px 6px;
