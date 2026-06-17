@@ -11,11 +11,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from PIL import Image as _Image
+
 PREVIEW_PATH     = str(Path(__file__).parent / 'static' / 'camera_preview.jpg')
 STILL_PATH       = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
 PHOTOS_DIR       = Path(__file__).parent / 'static' / 'photos'
 PREVIEW_INTERVAL = 0.5   # seconds between preview frames
 WARMUP_S         = 1.5   # let the sensor stabilise before first capture
+ROTATION         = 90    # degrees CCW to rotate captures; use 270 to flip the other way
 
 try:
     from picamera2 import Picamera2
@@ -62,6 +65,7 @@ def capture_still() -> bool:
             return False
         try:
             _cam.capture_file(STILL_PATH)
+            _rotate_inplace(STILL_PATH)
             PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
             ts   = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             dest = PHOTOS_DIR / f'photo_{ts}.jpg'
@@ -75,6 +79,16 @@ def capture_still() -> bool:
 
 def is_running() -> bool:
     return _running
+
+
+def _rotate_inplace(path: str):
+    """Rotate the JPEG at path by ROTATION degrees CCW, overwriting in place."""
+    try:
+        img = _Image.open(path)
+        img = img.rotate(ROTATION, expand=True)
+        img.save(path)
+    except Exception as e:
+        print(f'[camera] rotate error: {e}')
 
 
 # ── internal ──────────────────────────────────────────────────────────────────
@@ -110,6 +124,8 @@ def _run():
                 _cam.capture_file(PREVIEW_PATH)
             except Exception as e:
                 print(f'[camera] frame error: {e}')
+
+        _rotate_inplace(PREVIEW_PATH)
 
         if _on_frame:
             _on_frame()
