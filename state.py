@@ -4,6 +4,7 @@ APPS = [
     ('Notes',       'notes'),
     ('To-Do',       'todo'),
     ('Camera',      'camera'),
+    ('Images',      'images'),
     ('Clock',       'clock'),
     ('Calc',        'calculator'),
     ('Settings',    'settings'),
@@ -13,12 +14,13 @@ APPS = [
     ('Calories',    'webapp_calories'),
 ]
 
-APP_ICONS = ['✎', '✔', '◉', '◷', '#', '⚙', 'π', '♪', '✉', '⊕']
+APP_ICONS = ['✎', '✔', '◉', '▣', '◷', '#', '⚙', 'π', '♪', '✉', '⊕']
 
 APP_ICON_FILES = [
     'notes.png',
     'todo_list.png',
     'camera-0.png',
+    'camera.png',
     'clock.png',
     'calculator.png',
     'gears-0.png',
@@ -94,6 +96,11 @@ class AppState:
         self.audio_rec_idx      = 0
         self.audio_recording    = False
         self.audio_rec_start    = None  # monotonic start time
+
+        # ── image viewer ──────────────────────────────────────────────────
+        self.images_idx         = 0
+        self.images_view        = 'list'   # 'list' | 'view' | 'confirm'
+        self.images_confirm_sel = 0        # 0=No  1=Yes
 
         # ── display ───────────────────────────────────────────────
         self.force_full_refresh = False

@@ -122,6 +122,27 @@ def index():
                                has_photo=has_photo,
                                ts=ts)
 
+    if sc == 'images':
+        photos_dir = Path(__file__).parent / 'static' / 'photos'
+        photos_dir.mkdir(parents=True, exist_ok=True)
+        exts   = {'.jpg', '.jpeg', '.png', '.gif', '.bmp'}
+        photos = sorted(
+            [p for p in photos_dir.iterdir() if p.suffix.lower() in exts],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        names        = [p.name for p in photos]
+        idx          = max(0, min(s.images_idx, len(names) - 1)) if names else 0
+        selected_name = names[idx] if names else None
+        ts           = int(time.time())
+        return render_template('images.html',
+                               photos=names,
+                               selected=idx,
+                               view=s.images_view,
+                               selected_name=selected_name,
+                               confirm_sel=s.images_confirm_sel,
+                               ts=ts)
+
     if sc == 'text_input':
         return render_template('text_input.html',
                                prompt=s.ti_prompt,

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/static/win95.css">
+</head>
+<body>
+<div class="window">
+  <div class="title-bar">
+    <img src="/static/icons/camera.png" class="title-icon" alt="">
+    <span class="title">Image Viewer</span>
+    <div class="win-btn">&#8212;</div>
+    <div class="win-btn">&#9744;</div>
+    <div class="win-btn">&#10005;</div>
+  </div>
+  <div class="menu-bar"><span>File</span><span>View</span><span>Delete</span></div>
+
+  {% if view == 'list' %}
+  <div class="content">
+    {% if photos %}
+      {% for name in photos %}
+      <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}">
+        {% if loop.index0 == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+        <span style="flex:1; font-family:'Courier New',monospace; font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ name }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:#808080; font-size:22px; padding:20px; text-align:center">
+        <div style="font-size:72px; opacity:0.3">&#9685;</div>
+        <div>No images found.</div>
+        <div style="font-size:18px">Take photos with the Camera app<br>or copy images to static/photos/</div>
+      </div>
+    {% endif %}
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">{{ photos|length }} image{{ 's' if photos|length != 1 else '' }}</span>
+    <span class="status-panel">&#8597; navigate &nbsp; ACCEPT view &nbsp; BACK home</span>
+  </div>
+
+  {% elif view == 'view' %}
+  <div class="img-view-frame">
+    {% if selected_name %}
+      <img src="/static/photos/{{ selected_name }}?t={{ ts }}" class="img-view-img" alt="{{ selected_name }}">
+      <div class="img-view-label">{{ selected_name }}</div>
+    {% endif %}
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">{{ selected + 1 }}/{{ photos|length }}</span>
+    <span class="status-panel">&#8597; prev/next &nbsp; ACCEPT delete? &nbsp; BACK list</span>
+  </div>
+
+  {% elif view == 'confirm' %}
+  <div class="img-view-frame">
+    {% if selected_name %}
+      <img src="/static/photos/{{ selected_name }}?t={{ ts }}" class="img-view-img img-view-dim" alt="{{ selected_name }}">
+    {% endif %}
+    <div class="confirm-overlay">
+      <div class="confirm-box raised">
+        <div class="confirm-title">Delete Image?</div>
+        <div class="confirm-name">{{ selected_name }}</div>
+        <div class="confirm-btns">
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 0 else '' }}">No</div>
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 1 else '' }}">Yes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">&#8596; select &nbsp; ACCEPT confirm &nbsp; BACK cancel</span>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

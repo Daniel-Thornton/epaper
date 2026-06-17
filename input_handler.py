@@ -17,8 +17,9 @@ import camera
 import voice
 from state import state, APPS, CALC_FLAT, SYMBOL_FLAT
 
-DATA_DIR  = Path(__file__).parent / 'data'
-REC_DIR   = DATA_DIR / 'recordings'
+DATA_DIR   = Path(__file__).parent / 'data'
+REC_DIR    = DATA_DIR / 'recordings'
+PHOTOS_DIR = Path(__file__).parent / 'static' / 'photos'
 
 # ── GPIO pins ─────────────────────────────────────────────────────────────────
 PIN_UP      = 20
@@ -86,6 +87,9 @@ def _home(btn):
         s.home_selected = s.selected   # remember position before leaving
         if dest == 'camera':
             camera.start(on_frame=state.mark_dirty)
+        if dest == 'images':
+            s.images_view = 'list'
+            s.images_idx  = 0
         s.go(dest)
 
 
@@ -410,6 +414,67 @@ def _stop_and_save_rec():
     s.mark_dirty()
 
 
+def _list_photos():
+    PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
+    exts = {'.jpg', '.jpeg', '.png', '.gif', '.bmp'}
+    return sorted(
+        [p for p in PHOTOS_DIR.iterdir() if p.suffix.lower() in exts],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+
+def _images(btn):
+    s      = state
+    photos = _list_photos()
+    n      = len(photos)
+
+    if s.images_view == 'list':
+        if btn in ('UP', 'LEFT'):
+            s.images_idx = max(0, s.images_idx - 1)
+            s.mark_dirty()
+        elif btn in ('DOWN', 'RIGHT'):
+            s.images_idx = min(max(0, n - 1), s.images_idx + 1)
+            s.mark_dirty()
+        elif btn == 'ACCEPT' and n > 0:
+            s.images_view = 'view'
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.go('home')
+
+    elif s.images_view == 'view':
+        if btn in ('UP', 'LEFT'):
+            s.images_idx = max(0, s.images_idx - 1)
+            s.mark_dirty()
+        elif btn in ('DOWN', 'RIGHT'):
+            s.images_idx = min(max(0, n - 1), s.images_idx + 1)
+            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            s.images_view        = 'confirm'
+            s.images_confirm_sel = 0
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.images_view = 'list'
+            s.mark_dirty()
+
+    elif s.images_view == 'confirm':
+        if btn in ('LEFT', 'RIGHT', 'UP', 'DOWN'):
+            s.images_confirm_sel = 1 - s.images_confirm_sel
+            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            if s.images_confirm_sel == 1 and 0 <= s.images_idx < n:
+                try:
+                    photos[s.images_idx].unlink()
+                except Exception as e:
+                    print(f'[images] delete error: {e}')
+                s.images_idx = 0
+            s.images_view = 'list'
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.images_view = 'view'
+            s.mark_dirty()
+
+
 def _back_only(btn):
     if btn == 'BACK':
         state.go('home')
@@ -443,6 +508,7 @@ _HANDLERS = {
     'calculator':        _calc,
     'settings':          _settings,
     'camera':            _camera,
+    'images':            _images,
     'text_input':        _text_input,
     'audio_recorder':    _audio_recorder,
     'webapp_chat':       _webapp,

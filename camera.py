@@ -3,14 +3,17 @@ Persistent Picamera2 wrapper for the camera screen.
 
 start()  → spawns a daemon thread that inits the camera and loops preview captures
 stop()   → signals the thread to exit and closes the camera
-capture_still() → saves last_photo.jpg from the running camera
+capture_still() → saves last_photo.jpg and a timestamped copy to static/photos/
 """
+import shutil
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 
 PREVIEW_PATH     = str(Path(__file__).parent / 'static' / 'camera_preview.jpg')
 STILL_PATH       = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
+PHOTOS_DIR       = Path(__file__).parent / 'static' / 'photos'
 PREVIEW_INTERVAL = 0.5   # seconds between preview frames
 WARMUP_S         = 1.5   # let the sensor stabilise before first capture
 
@@ -52,14 +55,18 @@ def stop():
 
 
 def capture_still() -> bool:
-    """Capture a still photo to STILL_PATH using the running camera."""
+    """Capture a still photo to STILL_PATH and a timestamped copy in PHOTOS_DIR."""
     with _lock:
         if _cam is None:
             print('[camera] capture_still: camera not ready')
             return False
         try:
             _cam.capture_file(STILL_PATH)
-            print(f'[camera] still saved → {STILL_PATH}')
+            PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
+            ts   = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            dest = PHOTOS_DIR / f'photo_{ts}.jpg'
+            shutil.copy2(STILL_PATH, dest)
+            print(f'[camera] still saved → {dest}')
             return True
         except Exception as e:
             print(f'[camera] capture_still error: {e}')
