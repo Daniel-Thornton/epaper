@@ -23,12 +23,12 @@ REC_DIR   = DATA_DIR / 'recordings'
 # ── GPIO pins ─────────────────────────────────────────────────────────────────
 PIN_UP      = 20
 PIN_DOWN    = 13
-PIN_LEFT    = 16
+PIN_LEFT    = 12
 PIN_RIGHT   = 21
 PIN_BACK    = 26
 PIN_ACCEPT  = 19
 PIN_REFRESH = 5
-PIN_MIC     = 6
+PIN_MIC     = 0
 
 COLS_HOME = 3
 COLS_SYM  = 6
