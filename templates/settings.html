@@ -31,7 +31,11 @@
   </div>
 
   <div class="status-bar">
+    {% if selected == 4 %}
+    <span class="status-panel">ACCEPT toggle &nbsp; BACK home</span>
+    {% else %}
     <span class="status-panel">UP/DOWN navigate &nbsp; BACK home</span>
+    {% endif %}
   </div>
 </div>
 </body>

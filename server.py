@@ -67,7 +67,10 @@ def index():
         return render_template('home.html', apps=APPS, icons=APP_ICONS,
                                icon_files=APP_ICON_FILES,
                                selected=s.selected,
-                               clock=datetime.now().strftime('%H:%M'))
+                               clock=datetime.now().strftime('%H:%M'),
+                               battery_pct=s.battery_pct,
+                               battery_charging=s.battery_charging,
+                               battery_ac_ok=s.battery_ac_ok)
 
     if sc == 'notes':
         notes = _load('notes.json', [])
@@ -105,12 +108,17 @@ def index():
             ('Refresh Rate', f"{cfg.get('refresh_rate', 60)}s"),
             ('Display',      'Black & White'),
             ('Version',      'EpaperUI v2.0'),
+            ('Charging',     'Enabled' if s.battery_charging else 'Disabled'),
         ]
         return render_template('settings.html', items=items,
                                selected=s.settings_idx)
 
     if sc == 'info':
-        return render_template('info.html', info=_pi_info())
+        return render_template('info.html', info=_pi_info(),
+                               battery_pct=s.battery_pct,
+                               battery_mv=s.battery_mv,
+                               battery_charging=s.battery_charging,
+                               battery_ac_ok=s.battery_ac_ok)
 
     if sc == 'camera':
         static_dir     = Path(__file__).parent / 'static'

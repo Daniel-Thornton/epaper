@@ -102,6 +102,12 @@ class AppState:
         self.images_view        = 'list'   # 'list' | 'view' | 'confirm'
         self.images_confirm_sel = 0        # 0=No  1=Yes
 
+        # ── battery ───────────────────────────────────────────────
+        self.battery_pct      = -1     # -1 = unknown / sensor not ready
+        self.battery_mv       = 0      # millivolts from fuel gauge
+        self.battery_charging = False  # charge pin LOW and AC present
+        self.battery_ac_ok    = True   # GPIO6 HIGH = AC power OK
+
         # ── display ───────────────────────────────────────────────
         self.force_full_refresh = False
 

@@ -23,6 +23,23 @@
         <td>{{ value }}</td>
       </tr>
       {% endfor %}
+      {% if battery_pct >= 0 %}
+      <tr class="info-section-hdr">
+        <td colspan="2">Battery</td>
+      </tr>
+      <tr>
+        <td>Charge</td>
+        <td>{{ battery_pct }}%{% if battery_mv %} &nbsp;({{ "%.2f"|format(battery_mv / 1000.0) }}V){% endif %}</td>
+      </tr>
+      <tr>
+        <td>Charging</td>
+        <td>{% if battery_charging %}Yes &#9889;{% else %}No{% endif %}</td>
+      </tr>
+      <tr>
+        <td>AC Power</td>
+        <td>{% if battery_ac_ok %}OK{% else %}<strong>FAILED</strong>{% endif %}</td>
+      </tr>
+      {% endif %}
     </table>
   </div>
 

@@ -39,6 +39,10 @@ _KEYMAP = {
     'KEY_KP_ENTER':  '↵',
     'KEY_TAB':       '\t',
     'KEY_ESC':       '\x1b',
+    'KEY_UP':        '↑',
+    'KEY_DOWN':      '↓',
+    'KEY_LEFT':      '←',
+    'KEY_RIGHT':     '→',
 }
 
 _SHIFT_KEYS = {'KEY_LEFTSHIFT', 'KEY_RIGHTSHIFT'}
@@ -101,7 +105,7 @@ def start(on_char) -> object:
 
                 if isinstance(entry, tuple):
                     char = entry[1] if shift else entry[0]
-                elif entry in (' ', '⌫', '↵', '\t', '\x1b'):
+                elif entry in (' ', '⌫', '↵', '\t', '\x1b', '↑', '↓', '←', '→'):
                     char = entry
                 else:
                     char = entry.upper() if (shift ^ caps) else entry

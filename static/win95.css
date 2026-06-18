@@ -843,5 +843,66 @@ html, body {
   border-bottom: 3px solid #fff;
 }
 
+/* ── Battery widget (taskbar) ────────────────────────────────────── */
+.batt-widget {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.batt-icon {
+  display: flex;
+  align-items: center;
+}
+
+.batt-body {
+  width: 38px;
+  height: 20px;
+  border: 2px solid #000;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.batt-fill {
+  height: 100%;
+  background: #000;
+  float: left;
+  max-width: 100%;
+}
+
+.batt-nub {
+  width: 4px;
+  height: 10px;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.batt-pct {
+  font-size: 18px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.batt-sym {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.batt-alert { font-weight: bold; }
+
+/* ── Info table section header ───────────────────────────────────── */
+.info-section-hdr td {
+  background: #000080;
+  color: #fff;
+  font-weight: bold;
+  font-size: 20px;
+  padding: 8px 14px;
+}
+
 /* ── Scrollbar ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar { display: none; }

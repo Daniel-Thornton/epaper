@@ -13,6 +13,7 @@ try:
 except Exception:
     GPIO_AVAILABLE = False
 
+import battery
 import camera
 import voice
 from state import state, APPS, CALC_FLAT, SYMBOL_FLAT
@@ -244,8 +245,10 @@ def _settings(btn):
         s.settings_idx = max(0, s.settings_idx - 1)
         s.mark_dirty()
     elif btn in ('DOWN', 'RIGHT'):
-        s.settings_idx = min(3, s.settings_idx + 1)
+        s.settings_idx = min(4, s.settings_idx + 1)  # 5 items: 0-4
         s.mark_dirty()
+    elif btn == 'ACCEPT' and s.settings_idx == 4:
+        battery.toggle_charging()
     elif btn == 'BACK':
         s.go('home')
 
@@ -363,13 +366,20 @@ def handle_external_key(char: str):
         elif char == '\t':
             s.ti_value += '    '
             s.mark_dirty()
+        elif char in ('↑', '↓', '←', '→'):
+            pass  # arrow keys ignored in text input
         else:
             s.ti_value += char
             s.mark_dirty()
     else:
-        # Navigation keys work everywhere else
-        NAV = {'w': 'UP', 's': 'DOWN', 'a': 'LEFT', 'd': 'RIGHT',
-               '\x1b': 'BACK', '\r': 'ACCEPT'}
+        NAV = {
+            'w': 'UP',    '↑': 'UP',
+            's': 'DOWN',  '↓': 'DOWN',
+            'a': 'LEFT',  '←': 'LEFT',
+            'd': 'RIGHT', '→': 'RIGHT',
+            '\x1b': 'BACK', '⌫': 'BACK',
+            '\r': 'ACCEPT', '↵': 'ACCEPT', ' ': 'ACCEPT',
+        }
         btn = NAV.get(char.lower())
         if btn:
             handle(btn)

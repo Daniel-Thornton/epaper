@@ -8,6 +8,7 @@ import threading
 import time
 
 import server
+import battery
 import input_handler
 import keyboard_ext
 import render
@@ -74,6 +75,9 @@ if __name__ == '__main__':
     flask_thread.start()
     time.sleep(1.2)
     print('[main] Flask on http://127.0.0.1:5000/')
+
+    # Battery monitor (I2C fuel gauge + GPIO6/16)
+    battery.start()
 
     # GPIO buttons (returns tuple to keep references alive)
     _buttons = input_handler.start()
