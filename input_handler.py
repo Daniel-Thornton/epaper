@@ -212,6 +212,16 @@ def _clock(btn):
     elif btn == 'RIGHT':
         s.clock_tab = (s.clock_tab + 1) % 3
         s.mark_dirty()
+    elif btn == 'UP' and s.clock_tab == 1:
+        s.timer_total += 60
+        if s.timer_end is not None:
+            s.timer_end += 60
+        s.mark_dirty()
+    elif btn == 'DOWN' and s.clock_tab == 1:
+        s.timer_total = max(60, s.timer_total - 60)
+        if s.timer_end is not None:
+            s.timer_end = max(time.monotonic() + 1, s.timer_end - 60)
+        s.mark_dirty()
     elif btn == 'ACCEPT' and s.clock_tab == 1:
         if s.timer_end is None:
             s.timer_end = time.monotonic() + s.timer_total
@@ -442,12 +452,40 @@ def _audio_recorder(btn):
     recs = _list_recs()
     n    = len(recs)
 
-    if btn in ('UP', 'LEFT'):
+    if s.audio_rec_view == 'confirm':
+        if btn in ('UP', 'DOWN', 'LEFT', 'RIGHT'):
+            s.audio_rec_confirm_sel = 1 - s.audio_rec_confirm_sel
+            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            if s.audio_rec_confirm_sel == 1:
+                idx = s.audio_rec_idx
+                if 0 <= idx < len(recs):
+                    try:
+                        Path(recs[idx]['path']).unlink()
+                    except Exception as e:
+                        print(f'[audio] delete error: {e}')
+                s.audio_rec_idx = max(0, s.audio_rec_idx - 1)
+            s.audio_rec_view = 'list'
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.audio_rec_view = 'list'
+            s.mark_dirty()
+        return
+
+    if btn == 'UP':
         s.audio_rec_idx = max(0, s.audio_rec_idx - 1)
         s.mark_dirty()
     elif btn in ('DOWN', 'RIGHT'):
         s.audio_rec_idx = min(max(0, n - 1), s.audio_rec_idx + 1)
         s.mark_dirty()
+    elif btn == 'LEFT':
+        if n > 0 and not s.audio_recording:
+            s.audio_rec_view        = 'confirm'
+            s.audio_rec_confirm_sel = 0
+            s.mark_dirty()
+        else:
+            s.audio_rec_idx = max(0, s.audio_rec_idx - 1)
+            s.mark_dirty()
     elif btn == 'ACCEPT':
         if not s.audio_recording:
             if voice.start_recording():

@@ -35,11 +35,11 @@
   </div>
 
   <!-- Recordings list -->
-  <div class="content">
+  <div class="content" style="position:relative">
     {% if recordings %}
       {% for rec in recordings %}
-      <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}">
-        {% if loop.index0 == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+      <div class="list-row {{ 'selected' if loop.index0 == selected else '' }}" style="{{ 'opacity:0.3' if view == 'confirm' and loop.index0 != selected else '' }}">
+        {% if loop.index0 == selected and view != 'confirm' %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
         <span style="flex:1; font-family:'Courier New',monospace; font-size:11px">{{ rec.name }}</span>
         <span class="meta">{{ rec.duration }}</span>
       </div>
@@ -49,11 +49,28 @@
         No recordings yet. Press ACCEPT or hold GPIO 6 to record.
       </div>
     {% endif %}
+
+    {% if view == 'confirm' %}
+    <div class="confirm-overlay">
+      <div class="confirm-box raised">
+        <div class="confirm-title">Delete Recording?</div>
+        <div class="confirm-name">{{ sel_name }}</div>
+        <div class="confirm-btns">
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 0 else '' }}">No</div>
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 1 else '' }}">Yes</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <div class="status-bar">
+    {% if view == 'confirm' %}
+    <span class="status-panel">&#8596; select &nbsp; ACCEPT confirm &nbsp; BACK cancel</span>
+    {% else %}
     <span class="status-panel">{{ recordings|length }} recording{{ 's' if recordings|length != 1 else '' }}</span>
-    <span class="status-panel">ACCEPT rec/stop &nbsp; GPIO 6 hold &nbsp; BACK home</span>
+    <span class="status-panel">ACCEPT rec/stop &nbsp; LEFT delete &nbsp; BACK home</span>
+    {% endif %}
   </div>
 </div>
 </body>

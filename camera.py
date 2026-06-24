@@ -18,7 +18,7 @@ STILL_PATH       = str(Path(__file__).parent / 'static' / 'last_photo.jpg')
 PHOTOS_DIR       = Path(__file__).parent / 'static' / 'photos'
 PREVIEW_INTERVAL = 0.5   # seconds between preview frames
 WARMUP_S         = 1.5   # let the sensor stabilise before first capture
-ROTATION         = 90    # degrees CCW to rotate captures; use 270 to flip the other way
+ROTATION         = 270   # degrees CCW to rotate captures; use 90 to flip the other way
 
 try:
     from picamera2 import Picamera2

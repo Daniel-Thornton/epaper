@@ -96,9 +96,11 @@ class AppState:
         self.transcribing    = False   # transcription in progress
 
         # ── audio recorder app ────────────────────────────────────
-        self.audio_rec_idx      = 0
-        self.audio_recording    = False
-        self.audio_rec_start    = None  # monotonic start time
+        self.audio_rec_idx         = 0
+        self.audio_recording       = False
+        self.audio_rec_start       = None   # monotonic start time
+        self.audio_rec_view        = 'list' # 'list' | 'confirm'
+        self.audio_rec_confirm_sel = 0      # 0=No  1=Yes
 
         # ── image viewer ──────────────────────────────────────────────────
         self.images_idx         = 0

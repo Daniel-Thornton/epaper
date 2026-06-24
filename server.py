@@ -170,11 +170,16 @@ def index():
         elapsed = 0
         if s.audio_recording and s.audio_rec_start:
             elapsed = int(time.monotonic() - s.audio_rec_start)
+        recs        = _list_recs()
+        sel_name    = recs[s.audio_rec_idx]['name'] if recs and 0 <= s.audio_rec_idx < len(recs) else ''
         return render_template('audio_recorder.html',
-                               recordings=_list_recs(),
+                               recordings=recs,
                                selected=s.audio_rec_idx,
                                recording=s.audio_recording,
-                               elapsed=elapsed)
+                               elapsed=elapsed,
+                               view=s.audio_rec_view,
+                               confirm_sel=s.audio_rec_confirm_sel,
+                               sel_name=sel_name)
 
     if sc == 'webapp_chat':
         url = 'https://daniel-thornton.github.io/chat/'
