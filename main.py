@@ -16,6 +16,14 @@ from display import Display
 from state import state
 
 
+def _clock_ticker():
+    """Wake the render loop every second while the clock app is open."""
+    while True:
+        time.sleep(1)
+        if state.screen == 'clock':
+            state.mark_dirty()
+
+
 def _keyboard_thread():
     """WASD = UP/DOWN/LEFT/RIGHT  Q = BACK  E = ACCEPT"""
     MAP = {
@@ -75,6 +83,9 @@ if __name__ == '__main__':
     flask_thread.start()
     time.sleep(1.2)
     print('[main] Flask on http://127.0.0.1:5000/')
+
+    # Clock ticker — marks dirty every second while clock screen is active
+    threading.Thread(target=_clock_ticker, daemon=True, name='clock-ticker').start()
 
     # Battery monitor (I2C fuel gauge + GPIO6/16)
     battery.start()

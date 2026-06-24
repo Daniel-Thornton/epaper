@@ -61,11 +61,14 @@ class AppState:
         self.selected = 0
 
         # ── notes ─────────────────────────────────────────────────
-        self.notes_view = 'list'   # 'list' | 'view'
-        self.notes_idx  = 0
+        self.notes_view        = 'list'  # 'list' | 'view' | 'confirm'
+        self.notes_idx         = 0
+        self.notes_confirm_sel = 0       # 0=No  1=Yes
 
         # ── todo ──────────────────────────────────────────────────
-        self.todo_idx = 0
+        self.todo_idx         = 0
+        self.todo_view        = 'list'   # 'list' | 'confirm'
+        self.todo_confirm_sel = 0        # 0=No  1=Yes
 
         # ── clock ─────────────────────────────────────────────────
         self.clock_tab  = 0        # 0=clock 1=timer 2=alarms

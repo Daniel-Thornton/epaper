@@ -120,9 +120,32 @@ def _notes(btn):
                 s.mark_dirty()
         elif btn == 'BACK':
             s.go('home')
-    else:
+
+    elif s.notes_view == 'view':
         if btn == 'BACK':
             s.notes_view = 'list'
+            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            s.notes_view = 'confirm'
+            s.notes_confirm_sel = 0
+            s.mark_dirty()
+
+    elif s.notes_view == 'confirm':
+        if btn in ('UP', 'DOWN', 'LEFT', 'RIGHT'):
+            s.notes_confirm_sel = 1 - s.notes_confirm_sel
+            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            if s.notes_confirm_sel == 1:
+                notes = _load('notes.json', [])
+                idx = s.notes_idx - 1
+                if 0 <= idx < len(notes):
+                    notes.pop(idx)
+                    _save('notes.json', notes)
+                s.notes_idx = max(0, s.notes_idx - 1)
+            s.notes_view = 'list'
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.notes_view = 'view'
             s.mark_dirty()
 
 
@@ -132,26 +155,53 @@ def _todo(btn):
     n = len(todos)
     # Index 0 = "+ New Task", indices 1..n = todos[0..n-1]
 
-    if btn in ('UP', 'LEFT'):
-        s.todo_idx = max(0, s.todo_idx - 1)
-        s.mark_dirty()
-    elif btn in ('DOWN', 'RIGHT'):
-        s.todo_idx = min(n, s.todo_idx + 1)
-        s.mark_dirty()
-    elif btn == 'ACCEPT':
-        if s.todo_idx == 0:
-            s.go('text_input',
-                 ti_prompt='New Task — speak or type',
-                 ti_purpose='add_todo',
-                 ti_return='todo',
-                 ti_value='',
-                 ti_kb_cursor=0)
-        else:
-            todos[s.todo_idx - 1]['done'] = not todos[s.todo_idx - 1]['done']
-            _save('todos.json', todos)
+    if s.todo_view == 'list':
+        if btn == 'UP':
+            s.todo_idx = max(0, s.todo_idx - 1)
             s.mark_dirty()
-    elif btn == 'BACK':
-        s.go('home')
+        elif btn in ('DOWN', 'RIGHT'):
+            s.todo_idx = min(n, s.todo_idx + 1)
+            s.mark_dirty()
+        elif btn == 'LEFT':
+            if s.todo_idx > 0:
+                s.todo_view = 'confirm'
+                s.todo_confirm_sel = 0
+                s.mark_dirty()
+            else:
+                s.todo_idx = max(0, s.todo_idx - 1)
+                s.mark_dirty()
+        elif btn == 'ACCEPT':
+            if s.todo_idx == 0:
+                s.go('text_input',
+                     ti_prompt='New Task — speak or type',
+                     ti_purpose='add_todo',
+                     ti_return='todo',
+                     ti_value='',
+                     ti_kb_cursor=0)
+            else:
+                todos[s.todo_idx - 1]['done'] = not todos[s.todo_idx - 1]['done']
+                _save('todos.json', todos)
+                s.mark_dirty()
+        elif btn == 'BACK':
+            s.go('home')
+
+    elif s.todo_view == 'confirm':
+        if btn in ('UP', 'DOWN', 'LEFT', 'RIGHT'):
+            s.todo_confirm_sel = 1 - s.todo_confirm_sel
+            s.mark_dirty()
+        elif btn == 'ACCEPT':
+            if s.todo_confirm_sel == 1:
+                todos = _load('todos.json', [])
+                idx = s.todo_idx - 1
+                if 0 <= idx < len(todos):
+                    todos.pop(idx)
+                    _save('todos.json', todos)
+                s.todo_idx = max(0, s.todo_idx - 1)
+            s.todo_view = 'list'
+            s.mark_dirty()
+        elif btn == 'BACK':
+            s.todo_view = 'list'
+            s.mark_dirty()
 
 
 def _clock(btn):

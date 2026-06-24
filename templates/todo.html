@@ -15,26 +15,43 @@
   </div>
   <div class="menu-bar"><span>File</span><span>Edit</span></div>
 
-  <div class="content">
+  <div class="content" style="position:relative">
     <!-- New Task action — index 0, always first -->
-    <div class="todo-row new-action {{ 'selected' if selected == 0 else '' }}">
-      {% if selected == 0 %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+    <div class="todo-row new-action {{ 'selected' if selected == 0 else '' }}" style="{{ 'opacity:0.3' if view == 'confirm' else '' }}">
+      {% if selected == 0 and view != 'confirm' %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
       <div class="checkbox" style="font-size:16px; font-weight:bold">+</div>
       <span>New Task &nbsp;<span style="font-size:11px; opacity:0.7">(voice or type)</span></span>
     </div>
 
-    {% for item in todos %}
-    <div class="todo-row {{ 'selected' if loop.index == selected else '' }}">
-      {% if loop.index == selected %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
-      <div class="checkbox">{% if item.done %}&#10003;{% endif %}</div>
-      <span class="todo-text {{ 'done' if item.done else '' }}">{{ item.text }}</span>
+    {% for t in todos %}
+    <div class="todo-row {{ 'selected' if loop.index == selected else '' }}" style="{{ 'opacity:0.3' if view == 'confirm' and loop.index != selected else '' }}">
+      {% if loop.index == selected and view != 'confirm' %}<img src="/static/icons/cursor_hand.png" class="list-cursor" alt="">{% endif %}
+      <div class="checkbox">{% if t.done %}&#10003;{% endif %}</div>
+      <span class="todo-text {{ 'done' if t.done else '' }}">{{ t.text }}</span>
     </div>
     {% endfor %}
+
+    {% if view == 'confirm' %}
+    <div class="confirm-overlay">
+      <div class="confirm-box raised">
+        <div class="confirm-title">Delete Task?</div>
+        <div class="confirm-name">{{ item.text or '' }}</div>
+        <div class="confirm-btns">
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 0 else '' }}">No</div>
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 1 else '' }}">Yes</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <div class="status-bar">
+    {% if view == 'confirm' %}
+    <span class="status-panel">&#8596; select &nbsp; ACCEPT confirm &nbsp; BACK cancel</span>
+    {% else %}
     <span class="status-panel">{{ done }} / {{ todos|length }} done</span>
-    <span class="status-panel">ACCEPT toggle/new &nbsp; BACK home</span>
+    <span class="status-panel">ACCEPT toggle &nbsp; LEFT delete &nbsp; BACK home</span>
+    {% endif %}
   </div>
 </div>
 </body>

@@ -39,14 +39,33 @@
     <span class="status-panel">SELECT open/new &nbsp; BACK home</span>
   </div>
 
-  {% else %}
+  {% elif view == 'view' %}
   <div class="content">
     <div class="note-title-bar">{{ note.title or '(untitled)' }}</div>
     <div class="note-body">{{ note.content or '' }}</div>
   </div>
   <div class="status-bar">
     <span class="status-panel">{{ note.created[:10] if note.created else '' }}</span>
-    <span class="status-panel">BACK return to list</span>
+    <span class="status-panel">ACCEPT delete &nbsp; BACK list</span>
+  </div>
+
+  {% elif view == 'confirm' %}
+  <div class="content" style="position:relative">
+    <div class="note-title-bar" style="opacity:0.4">{{ note.title or '(untitled)' }}</div>
+    <div class="note-body" style="opacity:0.4">{{ note.content or '' }}</div>
+    <div class="confirm-overlay">
+      <div class="confirm-box raised">
+        <div class="confirm-title">Delete Note?</div>
+        <div class="confirm-name">{{ note.title or '(untitled)' }}</div>
+        <div class="confirm-btns">
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 0 else '' }}">No</div>
+          <div class="confirm-btn {{ 'confirm-btn-sel' if confirm_sel == 1 else '' }}">Yes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="status-panel">&#8596; select &nbsp; ACCEPT confirm &nbsp; BACK cancel</span>
   </div>
   {% endif %}
 </div>

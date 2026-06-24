@@ -74,17 +74,23 @@ def index():
 
     if sc == 'notes':
         notes = _load('notes.json', [])
+        note  = notes[s.notes_idx - 1] if 1 <= s.notes_idx <= len(notes) else {}
         if s.notes_view == 'list':
             return render_template('notes.html', view='list', notes=notes,
                                    selected=s.notes_idx)
-        note = notes[s.notes_idx - 1] if 1 <= s.notes_idx <= len(notes) else {}
+        if s.notes_view == 'confirm':
+            return render_template('notes.html', view='confirm', note=note,
+                                   confirm_sel=s.notes_confirm_sel)
         return render_template('notes.html', view='view', note=note)
 
     if sc == 'todo':
         todos = _load('todos.json', [])
         done  = sum(1 for t in todos if t.get('done'))
+        item  = todos[s.todo_idx - 1] if 1 <= s.todo_idx <= len(todos) else {}
         return render_template('todo.html', todos=todos,
-                               selected=s.todo_idx, done=done)
+                               selected=s.todo_idx, done=done,
+                               view=s.todo_view, item=item,
+                               confirm_sel=s.todo_confirm_sel)
 
     if sc == 'clock':
         now       = datetime.now()
