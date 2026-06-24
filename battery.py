@@ -51,8 +51,10 @@ def _read_max17043():
         raw  = bus.read_i2c_block_data(_MAX17043, 0x04, 2)
         pct  = min(100, raw[0])
         bus.close()
+        print(f'[battery] MAX17043: {pct}% {mv}mV')
         return pct, mv
-    except Exception:
+    except Exception as e:
+        print(f'[battery] MAX17043 not found at 0x36: {e}')
         return None, None
 
 
@@ -63,8 +65,11 @@ def _read_ip5306():
         val  = bus.read_byte_data(_IP5306, 0x78)
         bus.close()
         n    = bin((val >> 4) & 0x0F).count('1')
-        return [0, 25, 50, 75, 100][min(n, 4)], None
-    except Exception:
+        pct  = [0, 25, 50, 75, 100][min(n, 4)]
+        print(f'[battery] IP5306: {pct}%')
+        return pct, None
+    except Exception as e:
+        print(f'[battery] IP5306 not found at 0x75: {e}')
         return None, None
 
 

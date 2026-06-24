@@ -28,19 +28,17 @@
     <img src="/static/icons/start.png" alt=""> Start
   </div>
   <div style="flex:1"></div>
-  {% if battery_pct >= 0 %}
   <div class="batt-widget">
     <div class="batt-icon">
       <div class="batt-body">
-        <div class="batt-fill" style="width:{{ battery_pct }}%"></div>
+        <div class="batt-fill" style="width:{{ battery_pct if battery_pct >= 0 else 0 }}%"></div>
       </div>
       <div class="batt-nub"></div>
     </div>
-    <span class="batt-pct">{{ battery_pct }}%</span>
+    <span class="batt-pct">{% if battery_pct >= 0 %}{{ battery_pct }}%{% else %}--{% endif %}</span>
     {% if battery_charging %}<span class="batt-sym">&#9889;</span>{% endif %}
     {% if not battery_ac_ok %}<span class="batt-sym batt-alert">!</span>{% endif %}
   </div>
-  {% endif %}
   <div class="taskbar-clock sunken">{{ clock }}</div>
 </div>
 </body>
