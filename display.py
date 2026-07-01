@@ -4,7 +4,7 @@ from PIL import Image
 
 try:
     sys.path.insert(0, str(Path(__file__).parent / 'lib'))
-    from waveshare_epd import epd4in26
+    from waveshare_epd import epd7in5_V2
     HW_AVAILABLE = True
 except Exception as e:
     print(f'[display] EPD driver not available ({e}) — saving frames to /tmp/epaper_preview.png')
@@ -19,14 +19,15 @@ class Display:
     def __init__(self):
         self._epd = None
         self._partial_count = 0
+        self._partial_ready = False
         if HW_AVAILABLE:
-            self._epd = epd4in26.EPD()
+            self._epd = epd7in5_V2.EPD()
             self._epd.init()
             self._epd.Clear()
             print('[display] EPD initialised')
 
     def show(self, img: Image.Image, force_full: bool = False):
-        """Push a 480×800 1-bit PIL Image to the display."""
+        """Push a 480×800 1-bit PIL Image to the display (panel mounted portrait)."""
         if not HW_AVAILABLE:
             # On non-Pi: save preview PNG so the design can be inspected
             img.save(PREVIEW_PATH)
@@ -36,10 +37,14 @@ class Display:
         do_full = force_full or (self._partial_count >= self.PARTIAL_LIMIT)
         if do_full:
             self._epd.init()
-            self._epd.display_Base(self._epd.getbuffer(img))
+            self._epd.display(self._epd.getbuffer(img))
             self._partial_count = 0
+            self._partial_ready = False
         else:
-            self._epd.display_Partial(self._epd.getbuffer(img))
+            if not self._partial_ready:
+                self._epd.init_part()
+                self._partial_ready = True
+            self._epd.display_Partial(self._epd.getbuffer(img), 0, 0, self._epd.width, self._epd.height)
             self._partial_count += 1
 
     def sleep(self):
